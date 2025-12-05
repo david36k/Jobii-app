@@ -44,24 +44,28 @@ export const MOCK_CONTACTS: Contact[] = [
     name: 'Yossi Levi',
     phone: '+972502345678',
     groups: ['waiters'],
+    linkedUserId: 'part-1',
   },
   {
     id: 'contact-2',
     name: 'Michal Cohen',
     phone: '+972503456789',
     groups: ['waiters', 'kitchen'],
+    linkedUserId: 'part-2',
   },
   {
     id: 'contact-3',
     name: 'Avi Mizrahi',
     phone: '+972504567890',
     groups: ['kitchen'],
+    linkedUserId: 'part-3',
   },
   {
     id: 'contact-4',
     name: 'Sara Ben David',
     phone: '+972505678901',
     groups: ['waiters'],
+    linkedUserId: 'part-4',
   },
 ];
 

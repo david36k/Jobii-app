@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   headerContent: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
@@ -338,15 +338,13 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#111827',
     marginBottom: 4,
-    textAlign: 'right',
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
-    textAlign: 'right',
   },
   createButton: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4F46E5',
@@ -374,7 +372,6 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#111827',
     marginBottom: 16,
-    textAlign: 'right',
   },
   emptyState: {
     alignItems: 'center',
@@ -405,7 +402,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tenderHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
@@ -416,7 +413,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     flex: 1,
     marginLeft: 8,
-    textAlign: 'right',
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -432,7 +428,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   detailRow: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
@@ -444,7 +440,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   progressHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
@@ -470,7 +466,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tenderFooter: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 12,
@@ -503,7 +499,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   filterHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
@@ -535,7 +531,6 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#111827',
     marginBottom: 12,
-    textAlign: 'right',
   },
   filterOptions: {
     gap: 8,
@@ -556,7 +551,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500' as const,
     color: '#6B7280',
-    textAlign: 'right',
   },
   filterOptionTextActive: {
     color: '#4F46E5',

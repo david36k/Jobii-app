@@ -6,21 +6,45 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [tenders, setTenders] = useState<Tender[]>(MOCK_TENDERS);
+  const [tenders, setTenders] = useState<Tender[]>([]);
   const [contacts] = useState<Contact[]>(MOCK_CONTACTS);
   const [groups] = useState<Group[]>(MOCK_GROUPS);
 
+
   useEffect(() => {
-    loadUser();
+    loadData();
   }, []);
 
-  const loadUser = async () => {
-    const storedUserId = await AsyncStorage.getItem('currentUserId');
-    if (storedUserId) {
-      const user = MOCK_USERS.find((u) => u.id === storedUserId);
-      if (user) {
-        setCurrentUser(user);
+  const loadData = async () => {
+    try {
+      const storedUserId = await AsyncStorage.getItem('currentUserId');
+      if (storedUserId) {
+        const user = MOCK_USERS.find((u) => u.id === storedUserId);
+        if (user) {
+          setCurrentUser(user);
+        }
       }
+
+      const storedTenders = await AsyncStorage.getItem('tenders');
+      if (storedTenders) {
+        const parsedTenders = JSON.parse(storedTenders);
+        const tendersWithDates = parsedTenders.map((tender: any) => ({
+          ...tender,
+          date: new Date(tender.date),
+          createdAt: new Date(tender.createdAt),
+          invites: tender.invites.map((invite: any) => ({
+            ...invite,
+            updatedAt: new Date(invite.updatedAt),
+          })),
+        }));
+        setTenders(tendersWithDates);
+      } else {
+        setTenders(MOCK_TENDERS);
+        await AsyncStorage.setItem('tenders', JSON.stringify(MOCK_TENDERS));
+      }
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      setTenders(MOCK_TENDERS);
     }
   };
 
@@ -32,41 +56,55 @@ export const [AppProvider, useApp] = createContextHook(() => {
     }
   };
 
-  const createTender = useCallback((tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
-    const newTender: Tender = {
-      ...tender,
-      id: `tender-${Date.now()}`,
-      status: 'open',
-      createdAt: new Date(),
-    };
-    setTenders((prev) => [newTender, ...prev]);
-    return newTender;
-  }, []);
+  const createTender = useCallback(
+    async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
+      const newTender: Tender = {
+        ...tender,
+        id: `tender-${Date.now()}`,
+        status: 'open',
+        createdAt: new Date(),
+      };
+      const updatedTenders = [newTender, ...tenders];
+      setTenders(updatedTenders);
+      try {
+        await AsyncStorage.setItem('tenders', JSON.stringify(updatedTenders));
+      } catch (error) {
+        console.error('Failed to save tender:', error);
+      }
+      return newTender;
+    },
+    [tenders]
+  );
 
   const updateInviteStatus = useCallback(
-    (tenderId: string, userId: string, status: InviteStatus) => {
-      setTenders((prev) =>
-        prev.map((tender) => {
-          if (tender.id !== tenderId) return tender;
+    async (tenderId: string, userId: string, status: InviteStatus) => {
+      const updatedTenders = tenders.map((tender) => {
+        if (tender.id !== tenderId) return tender;
 
-          const updatedInvites = tender.invites.map((invite) =>
-            invite.userId === userId
-              ? { ...invite, status, updatedAt: new Date() }
-              : invite
-          );
+        const updatedInvites = tender.invites.map((invite) =>
+          invite.userId === userId
+            ? { ...invite, status, updatedAt: new Date() }
+            : invite
+        );
 
-          const acceptedCount = updatedInvites.filter((inv) => inv.status === 'accepted').length;
-          const newStatus = acceptedCount >= tender.quota ? 'full' : tender.status;
+        const acceptedCount = updatedInvites.filter((inv) => inv.status === 'accepted').length;
+        const newStatus = acceptedCount >= tender.quota ? 'full' : tender.status;
 
-          return {
-            ...tender,
-            invites: updatedInvites,
-            status: newStatus,
-          };
-        })
-      );
+        return {
+          ...tender,
+          invites: updatedInvites,
+          status: newStatus,
+        };
+      });
+
+      setTenders(updatedTenders);
+      try {
+        await AsyncStorage.setItem('tenders', JSON.stringify(updatedTenders));
+      } catch (error) {
+        console.error('Failed to save invite status:', error);
+      }
     },
-    []
+    [tenders]
   );
 
   const getTenderById = useCallback(

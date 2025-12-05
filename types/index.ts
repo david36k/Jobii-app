@@ -17,6 +17,7 @@ export interface Contact {
   name: string;
   phone: string;
   groups: string[];
+  linkedUserId?: string;
 }
 
 export interface Group {

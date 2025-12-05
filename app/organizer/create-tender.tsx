@@ -58,16 +58,28 @@ export default function CreateTender() {
 
     const allContactIds = Array.from(new Set([...selectedContacts, ...contactsFromGroups]));
 
-    const invites = allContactIds.map((contactId) => {
-      const contact = contacts.find((c) => c.id === contactId);
-      return {
-        userId: contactId.replace('contact-', 'part-'),
-        userName: contact?.name || 'Unknown',
-        userPhone: contact?.phone || '',
-        status: 'pending' as const,
-        updatedAt: new Date(),
-      };
-    });
+    const invites = allContactIds
+      .map((contactId) => {
+        const contact = contacts.find((c) => c.id === contactId);
+        if (!contact) {
+          console.warn(`Contact not found: ${contactId}`);
+          return null;
+        }
+
+        if (!contact.linkedUserId) {
+          console.log(`Contact ${contact.name} (${contact.phone}) needs SMS invitation`);
+          return null;
+        }
+
+        return {
+          userId: contact.linkedUserId,
+          userName: contact.name,
+          userPhone: contact.phone,
+          status: 'pending' as const,
+          updatedAt: new Date(),
+        };
+      })
+      .filter((invite): invite is NonNullable<typeof invite> => invite !== null);
 
     createTender({
       organizerId: currentUser!.id,
