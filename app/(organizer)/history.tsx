@@ -1,6 +1,7 @@
 import { useOrganizerTenders } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, DollarSign, ChevronLeft, History as HistoryIcon } from 'lucide-react-native';
 import { Tender } from '@/types';
 import { formatDate } from '@/utils/formatting';
@@ -18,7 +19,7 @@ export default function OrganizerHistory() {
 
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>היסטוריה</Text>
@@ -86,7 +87,7 @@ export default function OrganizerHistory() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

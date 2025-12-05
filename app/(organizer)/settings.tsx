@@ -1,6 +1,7 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Phone, LogOut, Info, Shield, Bell, ChevronLeft } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -26,7 +27,7 @@ export default function OrganizerSettings() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>הגדרות</Text>
@@ -119,7 +120,7 @@ export default function OrganizerSettings() {
 
         <Text style={styles.version}>גרסה 1.0.0</Text>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

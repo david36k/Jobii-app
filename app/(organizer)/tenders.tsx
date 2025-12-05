@@ -1,6 +1,7 @@
 import { useOrganizerTenders } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, DollarSign, ChevronLeft, FileText } from 'lucide-react-native';
 import { Tender } from '@/types';
 
@@ -47,7 +48,7 @@ export default function OrganizerTenders() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Text style={styles.title}>מכרזים</Text>
@@ -140,7 +141,7 @@ export default function OrganizerTenders() {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

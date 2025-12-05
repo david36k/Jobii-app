@@ -1,6 +1,7 @@
 import { useOrganizerTenders, useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Calendar, Clock, Users, ChevronLeft, Filter, X, Briefcase, TrendingUp } from 'lucide-react-native';
 import { Tender, TenderStatus } from '@/types';
 import { useState, useRef, useEffect } from 'react';
@@ -79,7 +80,7 @@ export default function OrganizerDashboard() {
 
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
@@ -326,7 +327,7 @@ export default function OrganizerDashboard() {
           onPress={toggleFilter}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
