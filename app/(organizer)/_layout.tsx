@@ -28,17 +28,17 @@ export default function OrganizerLayout() {
         }}
       />
       <Tabs.Screen
-        name="history"
-        options={{
-          title: 'היסטוריה',
-          tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
         name="tenders"
         options={{
           title: 'מכרזים',
           tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'היסטוריה',
+          tabBarIcon: ({ color, size }) => <History size={size} color={color} />,
         }}
       />
       <Tabs.Screen

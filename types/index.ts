@@ -49,4 +49,5 @@ export interface Tender {
   invites: Invite[];
   createdAt: Date;
   description?: string;
+  location?: string;
 }

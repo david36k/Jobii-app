@@ -1,7 +1,7 @@
 import { useApp } from '@/contexts/AppContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
-import { Calendar, Clock, DollarSign, Users, Check, X, AlertCircle } from 'lucide-react-native';
+import { Calendar, Clock, DollarSign, Users, Check, X, AlertCircle, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { formatDateFull } from '@/utils/formatting';
 
@@ -178,6 +178,18 @@ export default function ParticipantTenderDetails() {
                   <Text style={styles.detailValue}>{tender.quota}</Text>
                 </View>
               </View>
+
+              {tender.location && (
+                <View style={styles.detailItem}>
+                  <View style={styles.detailIconContainer}>
+                    <MapPin size={24} color="#4F46E5" />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={styles.detailLabel}>מיקום</Text>
+                    <Text style={styles.detailValue}>{tender.location}</Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             {tender.description && (

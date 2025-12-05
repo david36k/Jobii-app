@@ -28,6 +28,7 @@ export default function CreateTender() {
   const [pay, setPay] = useState<string>('');
   const [quota, setQuota] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [location, setLocation] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -106,6 +107,7 @@ export default function CreateTender() {
         quota: parseInt(quota),
         invites,
         description: description.trim() || undefined,
+        location: location.trim() || undefined,
       });
 
       setIsCreating(false);
@@ -262,6 +264,17 @@ export default function CreateTender() {
               onChangeText={setDescription}
               multiline
               numberOfLines={4}
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>מיקום (אופציונלי)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="למשל: אולם אירועים גני התערוכה, תל אביב"
+              value={location}
+              onChangeText={setLocation}
               placeholderTextColor="#9CA3AF"
             />
           </View>

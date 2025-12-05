@@ -1,7 +1,7 @@
 import { useApp } from '@/contexts/AppContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Calendar, Clock, DollarSign, Users, AlertCircle, Check, X, Clock as PendingIcon } from 'lucide-react-native';
+import { Calendar, Clock, DollarSign, Users, AlertCircle, Check, X, Clock as PendingIcon, MapPin } from 'lucide-react-native';
 import { formatDateFull, getStatusColor, getStatusText } from '@/utils/formatting';
 
 export default function OrganizerTenderDetails() {
@@ -97,6 +97,18 @@ export default function OrganizerTenderDetails() {
                   <Text style={styles.detailValue}>{tender.quota} workers</Text>
                 </View>
               </View>
+
+              {tender.location && (
+                <View style={styles.detailItem}>
+                  <View style={styles.detailIconContainer}>
+                    <MapPin size={24} color="#4F46E5" />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <Text style={styles.detailLabel}>מיקום</Text>
+                    <Text style={styles.detailValue}>{tender.location}</Text>
+                  </View>
+                </View>
+              )}
             </View>
 
             {tender.description && (
