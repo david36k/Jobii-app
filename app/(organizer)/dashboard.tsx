@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensi
 import { Plus, Calendar, Clock, Users, DollarSign, ChevronLeft, Filter, X } from 'lucide-react-native';
 import { Tender, TenderStatus } from '@/types';
 import { useState, useRef } from 'react';
-import { formatDate } from '@/utils/dateFormatter';
+import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -68,31 +68,7 @@ export default function OrganizerDashboard() {
 
 
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return '#3B82F6';
-      case 'full':
-        return '#059669';
-      case 'closed':
-        return '#6B7280';
-      default:
-        return '#6B7280';
-    }
-  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'פתוח';
-      case 'full':
-        return 'מלא';
-      case 'closed':
-        return 'סגור';
-      default:
-        return status;
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -128,6 +104,13 @@ export default function OrganizerDashboard() {
               <Users size={48} color="#D1D5DB" />
               <Text style={styles.emptyStateText}>אין מכרזים פעילים</Text>
               <Text style={styles.emptyStateSubtext}>צור את המכרז הראשון שלך כדי להתחיל</Text>
+              <TouchableOpacity
+                style={styles.emptyStateCTA}
+                onPress={() => router.push('/organizer/create-tender' as any)}
+              >
+                <Plus size={20} color="#FFFFFF" />
+                <Text style={styles.emptyStateCTAText}>צור מכרז</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             activeTenders.map((tender) => {
@@ -384,6 +367,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyStateCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+  },
+  emptyStateCTAText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
   tenderCard: {
     backgroundColor: '#FFFFFF',

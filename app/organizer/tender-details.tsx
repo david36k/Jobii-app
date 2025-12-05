@@ -2,7 +2,7 @@ import { useApp } from '@/contexts/AppContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Calendar, Clock, DollarSign, Users, AlertCircle, Check, X, Clock as PendingIcon } from 'lucide-react-native';
-import { formatDateFull } from '@/utils/dateFormatter';
+import { formatDateFull, getStatusColor, getStatusText } from '@/utils/formatting';
 
 export default function OrganizerTenderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,31 +34,7 @@ export default function OrganizerTenderDetails() {
 
   const progress = tender.quota > 0 ? (acceptedCount / tender.quota) * 100 : 0;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return '#3B82F6';
-      case 'full':
-        return '#059669';
-      case 'closed':
-        return '#6B7280';
-      default:
-        return '#6B7280';
-    }
-  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'Open';
-      case 'full':
-        return 'Full';
-      case 'closed':
-        return 'Closed';
-      default:
-        return status;
-    }
-  };
 
   return (
     <View style={styles.container}>

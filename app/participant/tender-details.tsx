@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Calendar, Clock, DollarSign, Users, Check, X, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { formatDateFull } from '@/utils/dateFormatter';
+import { formatDateFull } from '@/utils/formatting';
 
 export default function ParticipantTenderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();

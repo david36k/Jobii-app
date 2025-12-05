@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Calendar, Clock, DollarSign, ChevronLeft, History as HistoryIcon } from 'lucide-react-native';
 import { Tender } from '@/types';
-import { formatDate } from '@/utils/dateFormatter';
+import { formatDate } from '@/utils/formatting';
 
 export default function OrganizerHistory() {
   const tenders = useOrganizerTenders();

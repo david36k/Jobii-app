@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AppProvider } from "@/contexts/AppContext";
 import { I18nManager } from "react-native";
+import { Toaster } from 'sonner-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,6 +37,7 @@ export default function RootLayout() {
       <GestureHandlerRootView>
         <AppProvider>
           <RootLayoutNav />
+          <Toaster />
         </AppProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
