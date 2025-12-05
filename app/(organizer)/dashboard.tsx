@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensi
 import { Plus, Calendar, Clock, Users, DollarSign, ChevronLeft, Filter, X } from 'lucide-react-native';
 import { Tender, TenderStatus } from '@/types';
 import { useState, useRef } from 'react';
+import { formatDate } from '@/utils/dateFormatter';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -65,13 +66,7 @@ export default function OrganizerDashboard() {
     return tender.invites.filter((inv) => inv.status === 'accepted').length;
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('he-IL', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {

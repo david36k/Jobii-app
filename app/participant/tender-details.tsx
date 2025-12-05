@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Calendar, Clock, DollarSign, Users, Check, X, AlertCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { formatDateFull } from '@/utils/dateFormatter';
 
 export default function ParticipantTenderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,19 +45,14 @@ export default function ParticipantTenderDetails() {
     );
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
-  };
+
 
   const handleAccept = () => {
-    const acceptedCount = tender.invites.filter((inv) => inv.status === 'accepted').length;
+    const currentAcceptedCountExcludingMe = tender.invites.filter(
+      (inv) => inv.status === 'accepted' && inv.userId !== currentUser.id
+    ).length;
 
-    if (acceptedCount >= tender.quota) {
+    if (invite.status !== 'accepted' && currentAcceptedCountExcludingMe >= tender.quota) {
       Alert.alert('Quota Full', 'Sorry, this tender has reached its quota. Please try another one.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
@@ -147,7 +143,7 @@ export default function ParticipantTenderDetails() {
                 </View>
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Date</Text>
-                  <Text style={styles.detailValue}>{formatDate(tender.date)}</Text>
+                  <Text style={styles.detailValue}>{formatDateFull(tender.date)}</Text>
                 </View>
               </View>
 
@@ -202,6 +198,24 @@ export default function ParticipantTenderDetails() {
               <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
                 <X size={24} color="#DC2626" />
                 <Text style={styles.rejectButtonText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {invite.status === 'rejected' && (
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
+                <Check size={24} color="#FFFFFF" />
+                <Text style={styles.acceptButtonText}>Change to Accept</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {invite.status === 'accepted' && (
+            <View style={styles.actions}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleReject}>
+                <X size={24} color="#FFFFFF" />
+                <Text style={styles.cancelButtonText}>Cancel Attendance</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -379,5 +393,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700' as const,
     color: '#DC2626',
+  },
+  cancelButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cancelButtonText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
 });

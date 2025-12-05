@@ -27,11 +27,12 @@ export interface Group {
 }
 
 export interface Invite {
-  userId: string;
+  userId?: string;
   userName: string;
   userPhone: string;
   status: InviteStatus;
   updatedAt: Date;
+  isGuest?: boolean;
 }
 
 export interface Tender {

@@ -67,8 +67,14 @@ export default function CreateTender() {
         }
 
         if (!contact.linkedUserId) {
-          console.log(`Contact ${contact.name} (${contact.phone}) needs SMS invitation`);
-          return null;
+          console.log(`Contact ${contact.name} (${contact.phone}) will receive SMS invitation (guest invite)`);
+          return {
+            userName: contact.name,
+            userPhone: contact.phone,
+            status: 'pending' as const,
+            updatedAt: new Date(),
+            isGuest: true,
+          };
         }
 
         return {
@@ -77,6 +83,7 @@ export default function CreateTender() {
           userPhone: contact.phone,
           status: 'pending' as const,
           updatedAt: new Date(),
+          isGuest: false,
         };
       })
       .filter((invite): invite is NonNullable<typeof invite> => invite !== null);

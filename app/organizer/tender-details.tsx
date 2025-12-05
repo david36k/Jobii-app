@@ -2,6 +2,7 @@ import { useApp } from '@/contexts/AppContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Calendar, Clock, DollarSign, Users, AlertCircle, Check, X, Clock as PendingIcon } from 'lucide-react-native';
+import { formatDateFull } from '@/utils/dateFormatter';
 
 export default function OrganizerTenderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -25,14 +26,7 @@ export default function OrganizerTenderDetails() {
     );
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
-  };
+
 
   const acceptedCount = tender.invites.filter((inv) => inv.status === 'accepted').length;
   const pendingCount = tender.invites.filter((inv) => inv.status === 'pending').length;
@@ -92,7 +86,7 @@ export default function OrganizerTenderDetails() {
                 </View>
                 <View style={styles.detailContent}>
                   <Text style={styles.detailLabel}>Date</Text>
-                  <Text style={styles.detailValue}>{formatDate(tender.date)}</Text>
+                  <Text style={styles.detailValue}>{formatDateFull(tender.date)}</Text>
                 </View>
               </View>
 
@@ -206,9 +200,16 @@ export default function OrganizerTenderDetails() {
               const StatusIcon = statusStyle.icon;
 
               return (
-                <View key={invite.userId} style={styles.inviteItem}>
+                <View key={invite.userId || `guest-${invite.userPhone}`} style={styles.inviteItem}>
                   <View style={styles.inviteInfo}>
-                    <Text style={styles.inviteName}>{invite.userName}</Text>
+                    <View style={styles.inviteNameRow}>
+                      <Text style={styles.inviteName}>{invite.userName}</Text>
+                      {invite.isGuest && (
+                        <View style={styles.guestBadge}>
+                          <Text style={styles.guestBadgeText}>SMS</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.invitePhone}>{invite.userPhone}</Text>
                   </View>
                   <View style={[styles.inviteStatus, { backgroundColor: statusStyle.bg }]}>
@@ -441,5 +442,22 @@ const styles = StyleSheet.create({
   inviteStatusText: {
     fontSize: 12,
     fontWeight: '600' as const,
+  },
+  inviteNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  guestBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  guestBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: '#F59E0B',
   },
 });
