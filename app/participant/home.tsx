@@ -34,8 +34,10 @@ export default function ParticipantHome() {
             text: 'עבור למארגן',
             onPress: async () => {
               await switchUser(organizer.id);
-              router.replace('/(organizer)/dashboard' as any);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setTimeout(() => {
+                router.replace('/(organizer)/dashboard' as any);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }, 100);
             },
           },
         ]

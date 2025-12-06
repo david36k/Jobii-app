@@ -23,8 +23,10 @@ export default function OrganizerSettings() {
             text: 'עבור למשתתף',
             onPress: async () => {
               await switchUser(participant.id);
-              router.replace('/participant/home' as any);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              setTimeout(() => {
+                router.replace('/participant/home' as any);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }, 100);
             },
           },
         ]
@@ -43,8 +45,10 @@ export default function OrganizerSettings() {
         style: 'destructive',
         onPress: async () => {
           await switchUser('');
-          router.replace('/');
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          setTimeout(() => {
+            router.replace('/');
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }, 100);
         },
       },
     ]);
