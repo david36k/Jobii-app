@@ -1,13 +1,11 @@
 import { useOrganizerTenders, useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, Calendar, Clock, Users, ChevronLeft, Filter, X } from 'lucide-react-native';
-import { Tender, TenderStatus } from '@/types';
-import { useState, useRef, useEffect } from 'react';
+import { Calendar, Clock, Users, ChevronLeft, FileText, TrendingUp, CheckCircle2 } from 'lucide-react-native';
+import { Tender } from '@/types';
+import { useEffect } from 'react';
 import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -16,56 +14,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function OrganizerDashboard() {
   const tenders = useOrganizerTenders();
   const { currentUser } = useApp();
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
-  const [selectedStatus, setSelectedStatus] = useState<TenderStatus | 'all'>('all');
-  const [selectedDateRange, setSelectedDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
-  const toggleFilter = () => {
-    const toValue = isFilterOpen ? SCREEN_WIDTH : 0;
-    Animated.spring(slideAnim, {
-      toValue,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start();
-    setIsFilterOpen(!isFilterOpen);
-  };
-
-  const applyFilters = (tenderList: Tender[]) => {
-    let filtered = tenderList;
-
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status === selectedStatus);
-    }
-
-    if (selectedDateRange !== 'all') {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      filtered = filtered.filter((t) => {
-        const tenderDate = new Date(t.date);
-        const tenderDay = new Date(tenderDate.getFullYear(), tenderDate.getMonth(), tenderDate.getDate());
-
-        if (selectedDateRange === 'today') {
-          return tenderDay.getTime() === today.getTime();
-        } else if (selectedDateRange === 'week') {
-          const weekFromNow = new Date(today);
-          weekFromNow.setDate(today.getDate() + 7);
-          return tenderDay >= today && tenderDay <= weekFromNow;
-        } else if (selectedDateRange === 'month') {
-          const monthFromNow = new Date(today);
-          monthFromNow.setMonth(today.getMonth() + 1);
-          return tenderDay >= today && tenderDay <= monthFromNow;
-        }
-        return true;
-      });
-    }
-
-    return filtered;
-  };
-
-  const activeTenders = applyFilters(tenders.filter((t) => t.status !== 'closed'));
+  const activeTenders = tenders.filter((t) => t.status !== 'closed');
 
   useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -83,80 +33,77 @@ export default function OrganizerDashboard() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.filterButton}
-              onPress={toggleFilter}
-            >
-              <Filter size={24} color="#4F46E5" />
-            </TouchableOpacity>
-            <View>
-              <Text style={styles.greeting}>שלום, {currentUser?.name || 'מארגן'}</Text>
-              <Text style={styles.subtitle}>נהל את המכרזים שלך</Text>
+          <Text style={styles.greeting}>שלום, {currentUser?.name || 'מארגן'}</Text>
+          <Text style={styles.subtitle}>לוח הבקרה שלך</Text>
+        </View>
+
+        <View style={styles.guidesSection}>
+          <View style={styles.guideCard}>
+            <View style={styles.guideIcon}>
+              <FileText size={28} color="#4F46E5" />
             </View>
+            <Text style={styles.guideTitle}>איך זה עובד?</Text>
+            <Text style={styles.guideText}>
+              צור מכרז חדש, בחר משתתפים, ושלח הזמנות. המשתתפים יקבלו הודעה ויוכלו לאשר או לדחות את ההזמנה.
+            </Text>
+            <TouchableOpacity
+              style={styles.guideButton}
+              onPress={() => router.push('/(organizer)/tenders' as any)}
+            >
+              <Text style={styles.guideButtonText}>עבור למכרזים</Text>
+              <ChevronLeft size={16} color="#4F46E5" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.guideCard}>
+            <View style={styles.guideIcon}>
+              <TrendingUp size={28} color="#059669" />
+            </View>
+            <Text style={styles.guideTitle}>למה להשתמש במערכת?</Text>
+            <Text style={styles.guideText}>
+              נהל את כל המכרזים שלך במקום אחד. עקוב אחרי תגובות, נהל מכסות, ושמור על כל הפרטים מאורגנים.
+            </Text>
+            <TouchableOpacity
+              style={styles.guideButton}
+              onPress={() => router.push('/(organizer)/history' as any)}
+            >
+              <Text style={styles.guideButtonText}>צפה בהיסטוריה</Text>
+              <ChevronLeft size={16} color="#4F46E5" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.guideCard}>
+            <View style={styles.guideIcon}>
+              <CheckCircle2 size={28} color="#F59E0B" />
+            </View>
+            <Text style={styles.guideTitle}>כמה זה עולה?</Text>
+            <Text style={styles.guideText}>
+              המערכת חינמית לחלוטין! נהל כמה מכרזים שתרצה, הזמן כמה עובדים שתרצה, ותהנה מהנוחות המלאות.
+            </Text>
+            <TouchableOpacity
+              style={styles.guideButton}
+              onPress={() => router.push('/(organizer)/settings' as any)}
+            >
+              <Text style={styles.guideButtonText}>הגדרות</Text>
+              <ChevronLeft size={16} color="#4F46E5" />
+            </TouchableOpacity>
           </View>
         </View>
 
-
-
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => router.push('/organizer/create-tender' as any)}
-        >
-          <Plus size={24} color="#FFFFFF" />
-          <Text style={styles.createButtonText}>צור מכרז חדש</Text>
-        </TouchableOpacity>
-
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.statusButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.statusButton,
-                  selectedStatus === 'open' && styles.statusButtonActive,
-                ]}
-                onPress={() => setSelectedStatus(selectedStatus === 'open' ? 'all' : 'open')}
-              >
-                <Text
-                  style={[
-                    styles.statusButtonText,
-                    selectedStatus === 'open' && styles.statusButtonTextActive,
-                  ]}
-                >
-                  פתוח
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.statusButton,
-                  selectedStatus === 'closed' && styles.statusButtonActive,
-                ]}
-                onPress={() => setSelectedStatus(selectedStatus === 'closed' ? 'all' : 'closed')}
-              >
-                <Text
-                  style={[
-                    styles.statusButtonText,
-                    selectedStatus === 'closed' && styles.statusButtonTextActive,
-                  ]}
-                >
-                  סגור
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.sectionTitle}>מכרזים פעילים ({activeTenders.length})</Text>
-          </View>
+          <Text style={styles.sectionTitle}>מכרזים פעילים ({activeTenders.length})</Text>
 
           {activeTenders.length === 0 ? (
             <View style={styles.emptyState}>
               <Users size={48} color="#D1D5DB" />
               <Text style={styles.emptyStateText}>אין מכרזים פעילים</Text>
-              <Text style={styles.emptyStateSubtext}>צור את המכרז הראשון שלך כדי להתחיל</Text>
+              <Text style={styles.emptyStateSubtext}>עבור לעמוד &quot;מכרזים&quot; כדי ליצור מכרז חדש</Text>
               <TouchableOpacity
                 style={styles.emptyStateCTA}
-                onPress={() => router.push('/organizer/create-tender' as any)}
+                onPress={() => router.push('/(organizer)/tenders' as any)}
               >
-                <Plus size={20} color="#FFFFFF" />
-                <Text style={styles.emptyStateCTAText}>צור מכרז</Text>
+                <FileText size={20} color="#FFFFFF" />
+                <Text style={styles.emptyStateCTAText}>לעמוד מכרזים</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -239,97 +186,6 @@ export default function OrganizerDashboard() {
           )}
         </View>
       </ScrollView>
-
-      <Animated.View
-        style={[
-          styles.filterPanel,
-          {
-            transform: [{ translateX: slideAnim }],
-          },
-        ]}
-      >
-        <View style={styles.filterHeader}>
-          <TouchableOpacity onPress={toggleFilter} style={styles.closeButton}>
-            <X size={24} color="#111827" />
-          </TouchableOpacity>
-          <Text style={styles.filterTitle}>סינון מכרזים</Text>
-        </View>
-
-        <ScrollView style={styles.filterContent}>
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>סטטוס</Text>
-            <View style={styles.filterOptions}>
-              {(['all', 'open', 'full', 'closed'] as const).map((status) => (
-                <TouchableOpacity
-                  key={status}
-                  style={[
-                    styles.filterOption,
-                    selectedStatus === status && styles.filterOptionActive,
-                  ]}
-                  onPress={() => setSelectedStatus(status)}
-                >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedStatus === status && styles.filterOptionTextActive,
-                    ]}
-                  >
-                    {status === 'all' ? 'הכל' : getStatusText(status)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.filterSection}>
-            <Text style={styles.filterSectionTitle}>תאריך</Text>
-            <View style={styles.filterOptions}>
-              {[
-                { value: 'all', label: 'הכל' },
-                { value: 'today', label: 'היום' },
-                { value: 'week', label: 'השבוע' },
-                { value: 'month', label: 'החודש' },
-              ].map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.filterOption,
-                    selectedDateRange === option.value && styles.filterOptionActive,
-                  ]}
-                  onPress={() => setSelectedDateRange(option.value as any)}
-                >
-                  <Text
-                    style={[
-                      styles.filterOptionText,
-                      selectedDateRange === option.value && styles.filterOptionTextActive,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={styles.resetButton}
-            onPress={() => {
-              setSelectedStatus('all');
-              setSelectedDateRange('all');
-            }}
-          >
-            <Text style={styles.resetButtonText}>איפוס סינון</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </Animated.View>
-
-      {isFilterOpen && (
-        <TouchableOpacity
-          style={styles.overlay}
-          activeOpacity={1}
-          onPress={toggleFilter}
-        />
-      )}
     </SafeAreaView>
   );
 }
@@ -346,20 +202,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    marginBottom: 24,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#EEF2FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 32,
   },
   greeting: {
     fontSize: 28,
@@ -371,65 +214,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
   },
-
-  createButton: {
-    flexDirection: 'row',
+  guidesSection: {
+    marginBottom: 32,
+    gap: 16,
+  },
+  guideCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  guideIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F9FAFB',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4F46E5',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginBottom: 32,
-    gap: 8,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 16,
   },
-  createButtonText: {
-    fontSize: 16,
+  guideTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#111827',
+    marginBottom: 8,
+  },
+  guideText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  guideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  guideButtonText: {
+    fontSize: 15,
     fontWeight: '600' as const,
-    color: '#FFFFFF',
+    color: '#4F46E5',
   },
   section: {
     marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
     color: '#111827',
-  },
-  statusButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  statusButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  statusButtonActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
-  },
-  statusButtonText: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#6B7280',
-  },
-  statusButtonTextActive: {
-    color: '#FFFFFF',
+    marginBottom: 16,
   },
   emptyState: {
     alignItems: 'center',
@@ -572,98 +415,6 @@ const styles = StyleSheet.create({
   },
   invitesText: {
     fontSize: 14,
-    color: '#6B7280',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  filterPanel: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: SCREEN_WIDTH * 0.85,
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  filterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  filterTitle: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: '#111827',
-  },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterContent: {
-    flex: 1,
-    padding: 20,
-  },
-  filterSection: {
-    marginBottom: 32,
-  },
-  filterSectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#111827',
-    marginBottom: 12,
-  },
-  filterOptions: {
-    gap: 8,
-  },
-  filterOption: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 2,
-    borderColor: '#F9FAFB',
-  },
-  filterOptionActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#4F46E5',
-  },
-  filterOptionText: {
-    fontSize: 15,
-    fontWeight: '500' as const,
-    color: '#6B7280',
-  },
-  filterOptionTextActive: {
-    color: '#4F46E5',
-    fontWeight: '600' as const,
-  },
-  resetButton: {
-    marginTop: 24,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-  },
-  resetButtonText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
     color: '#6B7280',
   },
 });

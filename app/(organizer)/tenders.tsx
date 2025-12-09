@@ -1,71 +1,159 @@
 import { useOrganizerTenders } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, DollarSign, ChevronLeft, FileText } from 'lucide-react-native';
-import { Tender } from '@/types';
+import { Calendar, Clock, ChevronLeft, FileText, Plus, Filter, X } from 'lucide-react-native';
+import { Tender, TenderStatus } from '@/types';
+import { useState, useRef, useEffect } from 'react';
+import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function OrganizerTenders() {
   const tenders = useOrganizerTenders();
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [selectedStatus, setSelectedStatus] = useState<TenderStatus | 'all'>('all');
+  const [selectedDateRange, setSelectedDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+
+  const toggleFilter = () => {
+    const toValue = isFilterOpen ? SCREEN_WIDTH : 0;
+    Animated.spring(slideAnim, {
+      toValue,
+      useNativeDriver: true,
+      tension: 65,
+      friction: 11,
+    }).start();
+    setIsFilterOpen(!isFilterOpen);
+  };
+
+  const applyFilters = (tenderList: Tender[]) => {
+    let filtered = tenderList;
+
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter((t) => t.status === selectedStatus);
+    }
+
+    if (selectedDateRange !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      filtered = filtered.filter((t) => {
+        const tenderDate = new Date(t.date);
+        const tenderDay = new Date(tenderDate.getFullYear(), tenderDate.getMonth(), tenderDate.getDate());
+
+        if (selectedDateRange === 'today') {
+          return tenderDay.getTime() === today.getTime();
+        } else if (selectedDateRange === 'week') {
+          const weekFromNow = new Date(today);
+          weekFromNow.setDate(today.getDate() + 7);
+          return tenderDay >= today && tenderDay <= weekFromNow;
+        } else if (selectedDateRange === 'month') {
+          const monthFromNow = new Date(today);
+          monthFromNow.setMonth(today.getMonth() + 1);
+          return tenderDay >= today && tenderDay <= monthFromNow;
+        }
+        return true;
+      });
+    }
+
+    return filtered;
+  };
+
+  const filteredTenders = applyFilters(tenders);
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [filteredTenders.length]);
 
   const getAcceptedCount = (tender: Tender) => {
     return tender.invites.filter((inv) => inv.status === 'accepted').length;
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('he-IL', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }).format(date);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return '#3B82F6';
-      case 'full':
-        return '#059669';
-      case 'closed':
-        return '#6B7280';
-      default:
-        return '#6B7280';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'פתוח';
-      case 'full':
-        return 'מלא';
-      case 'closed':
-        return 'סגור';
-      default:
-        return status;
-    }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>מכרזים</Text>
-          <Text style={styles.subtitle}>כל המכרזים שלך</Text>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.filterButton}
+              onPress={toggleFilter}
+            >
+              <Filter size={24} color="#4F46E5" />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.title}>מכרזים</Text>
+              <Text style={styles.subtitle}>כל המכרזים שלך</Text>
+            </View>
+          </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>סה&quot;כ {tenders.length} מכרזים</Text>
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={() => router.push('/organizer/create-tender' as any)}
+        >
+          <Plus size={24} color="#FFFFFF" />
+          <Text style={styles.createButtonText}>צור מכרז חדש</Text>
+        </TouchableOpacity>
 
-          {tenders.length === 0 ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.statusButtons}>
+              <TouchableOpacity
+                style={[
+                  styles.statusButton,
+                  selectedStatus === 'open' && styles.statusButtonActive,
+                ]}
+                onPress={() => setSelectedStatus(selectedStatus === 'open' ? 'all' : 'open')}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    selectedStatus === 'open' && styles.statusButtonTextActive,
+                  ]}
+                >
+                  פתוח
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.statusButton,
+                  selectedStatus === 'closed' && styles.statusButtonActive,
+                ]}
+                onPress={() => setSelectedStatus(selectedStatus === 'closed' ? 'all' : 'closed')}
+              >
+                <Text
+                  style={[
+                    styles.statusButtonText,
+                    selectedStatus === 'closed' && styles.statusButtonTextActive,
+                  ]}
+                >
+                  סגור
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.sectionTitle}>סה&quot;כ {filteredTenders.length} מכרזים</Text>
+          </View>
+
+          {filteredTenders.length === 0 ? (
             <View style={styles.emptyState}>
               <FileText size={48} color="#D1D5DB" />
               <Text style={styles.emptyStateText}>אין מכרזים</Text>
-              <Text style={styles.emptyStateSubtext}>צור מכרז חדש מהלוח הבקרה</Text>
+              <Text style={styles.emptyStateSubtext}>צור את המכרז הראשון שלך כדי להתחיל</Text>
+              <TouchableOpacity
+                style={styles.emptyStateCTA}
+                onPress={() => router.push('/organizer/create-tender' as any)}
+              >
+                <Plus size={20} color="#FFFFFF" />
+                <Text style={styles.emptyStateCTAText}>צור מכרז</Text>
+              </TouchableOpacity>
             </View>
           ) : (
-            tenders.map((tender) => {
+            filteredTenders.map((tender) => {
               const acceptedCount = getAcceptedCount(tender);
               const progress = tender.quota > 0 ? (acceptedCount / tender.quota) * 100 : 0;
 
@@ -74,6 +162,7 @@ export default function OrganizerTenders() {
                   key={tender.id}
                   style={styles.tenderCard}
                   onPress={() => router.push(`/organizer/tender-details?id=${tender.id}` as any)}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.tenderHeader}>
                     <View
@@ -92,19 +181,21 @@ export default function OrganizerTenders() {
                   </View>
 
                   <View style={styles.tenderDetails}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailText}>{formatDate(tender.date)}</Text>
-                      <Calendar size={16} color="#6B7280" />
+                    <View style={styles.payRow}>
+                      <Text style={styles.payAmount}>₪{tender.pay}</Text>
                     </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailText}>
-                        {tender.startTime} - {tender.endTime}
-                      </Text>
-                      <Clock size={16} color="#6B7280" />
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailText}>₪{tender.pay}</Text>
-                      <DollarSign size={16} color="#6B7280" />
+                    
+                    <View style={styles.dateTimeSection}>
+                      <View style={styles.dateRow}>
+                        <Text style={styles.dateText}>{formatDate(tender.date)}</Text>
+                        <Calendar size={18} color="#4F46E5" />
+                      </View>
+                      <View style={styles.timeRow}>
+                        <Text style={styles.timeText}>
+                          {tender.startTime} - {tender.endTime}
+                        </Text>
+                        <Clock size={16} color="#6B7280" />
+                      </View>
                     </View>
                   </View>
 
@@ -141,6 +232,97 @@ export default function OrganizerTenders() {
           )}
         </View>
       </ScrollView>
+
+      <Animated.View
+        style={[
+          styles.filterPanel,
+          {
+            transform: [{ translateX: slideAnim }],
+          },
+        ]}
+      >
+        <View style={styles.filterHeader}>
+          <TouchableOpacity onPress={toggleFilter} style={styles.closeButton}>
+            <X size={24} color="#111827" />
+          </TouchableOpacity>
+          <Text style={styles.filterTitle}>סינון מכרזים</Text>
+        </View>
+
+        <ScrollView style={styles.filterContent}>
+          <View style={styles.filterSection}>
+            <Text style={styles.filterSectionTitle}>סטטוס</Text>
+            <View style={styles.filterOptions}>
+              {(['all', 'open', 'full', 'closed'] as const).map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  style={[
+                    styles.filterOption,
+                    selectedStatus === status && styles.filterOptionActive,
+                  ]}
+                  onPress={() => setSelectedStatus(status)}
+                >
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      selectedStatus === status && styles.filterOptionTextActive,
+                    ]}
+                  >
+                    {status === 'all' ? 'הכל' : getStatusText(status)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.filterSection}>
+            <Text style={styles.filterSectionTitle}>תאריך</Text>
+            <View style={styles.filterOptions}>
+              {[
+                { value: 'all', label: 'הכל' },
+                { value: 'today', label: 'היום' },
+                { value: 'week', label: 'השבוע' },
+                { value: 'month', label: 'החודש' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.filterOption,
+                    selectedDateRange === option.value && styles.filterOptionActive,
+                  ]}
+                  onPress={() => setSelectedDateRange(option.value as any)}
+                >
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      selectedDateRange === option.value && styles.filterOptionTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={() => {
+              setSelectedStatus('all');
+              setSelectedDateRange('all');
+            }}
+          >
+            <Text style={styles.resetButtonText}>איפוס סינון</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Animated.View>
+
+      {isFilterOpen && (
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPress={toggleFilter}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -159,27 +341,87 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: '#111827',
     marginBottom: 4,
-    textAlign: 'right',
   },
   subtitle: {
     fontSize: 16,
     color: '#6B7280',
-    textAlign: 'right',
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginBottom: 32,
+    gap: 8,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  createButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
   section: {
     marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
     color: '#111827',
-    marginBottom: 16,
-    textAlign: 'right',
+  },
+  statusButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statusButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  statusButtonActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+  },
+  statusButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#6B7280',
+  },
+  statusButtonTextActive: {
+    color: '#FFFFFF',
   },
   emptyState: {
     alignItems: 'center',
@@ -197,6 +439,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyStateCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+  },
+  emptyStateCTAText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
   tenderCard: {
     backgroundColor: '#FFFFFF',
@@ -210,7 +468,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tenderHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
@@ -221,7 +479,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     flex: 1,
     marginLeft: 8,
-    textAlign: 'right',
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -233,15 +490,38 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   tenderDetails: {
-    gap: 8,
     marginBottom: 16,
   },
-  detailRow: {
-    flexDirection: 'row-reverse',
+  payRow: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  payAmount: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: '#047857',
+  },
+  dateTimeSection: {
+    gap: 8,
+  },
+  dateRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  detailText: {
+  dateText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#111827',
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  timeText: {
     fontSize: 14,
     color: '#6B7280',
   },
@@ -249,7 +529,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   progressHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
@@ -275,7 +555,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   tenderFooter: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 12,
@@ -284,6 +564,98 @@ const styles = StyleSheet.create({
   },
   invitesText: {
     fontSize: 14,
+    color: '#6B7280',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  filterPanel: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: SCREEN_WIDTH * 0.85,
+    height: '100%',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#111827',
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterContent: {
+    flex: 1,
+    padding: 20,
+  },
+  filterSection: {
+    marginBottom: 32,
+  },
+  filterSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#111827',
+    marginBottom: 12,
+  },
+  filterOptions: {
+    gap: 8,
+  },
+  filterOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#F9FAFB',
+  },
+  filterOptionActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#4F46E5',
+  },
+  filterOptionText: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: '#6B7280',
+  },
+  filterOptionTextActive: {
+    color: '#4F46E5',
+    fontWeight: '600' as const,
+  },
+  resetButton: {
+    marginTop: 24,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+  },
+  resetButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
     color: '#6B7280',
   },
 });
