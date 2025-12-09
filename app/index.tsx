@@ -35,7 +35,7 @@ export default function Index() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
-          <Text style={styles.title}>Haluka</Text>
+          <Text style={styles.title}>Mihrazone</Text>
           <Text style={styles.subtitle}>בחר תפקיד כדי להמשיך</Text>
 
           <View style={styles.section}>

@@ -131,7 +131,7 @@ export default function OrganizerSettings() {
               style={styles.menuItem}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('אודות', 'Haluka v1.0\n\nאפליקציה לניהול מכרזי עבודה מהירים');
+                Alert.alert('אודות', 'Mihrazone v1.0\n\nאפליקציה לניהול מכרזי עבודה מהירים');
               }}
             >
               <View style={styles.menuItemRight}>
