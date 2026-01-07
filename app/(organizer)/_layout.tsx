@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, History, FileText, Settings } from 'lucide-react-native';
+import { LayoutDashboard, History, ListFilter, Settings } from 'lucide-react-native';
 
 export default function OrganizerLayout() {
   return (
@@ -13,6 +13,11 @@ export default function OrganizerLayout() {
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
           paddingTop: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -31,7 +36,7 @@ export default function OrganizerLayout() {
         name="tenders"
         options={{
           title: 'מכרזים',
-          tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <ListFilter size={size} color={color} />,
         }}
       />
       <Tabs.Screen

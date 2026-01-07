@@ -2,7 +2,7 @@ import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Phone, LogOut, Info, Shield, Bell, ChevronLeft, RefreshCw } from 'lucide-react-native';
+import { User, Phone, LogOut, MessageCircle, Bell, ChevronLeft, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 export default function OrganizerSettings() {
@@ -98,12 +98,12 @@ export default function OrganizerSettings() {
               style={styles.menuItem}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('פרופיל', 'דף פרופיל בקרוב...');
+                Alert.alert('ערוך פרופיל', 'עריכת פרופיל בקרוב...');
               }}
             >
               <View style={styles.menuItemRight}>
                 <ChevronLeft size={20} color="#9CA3AF" />
-                <Text style={styles.menuItemText}>פרופיל</Text>
+                <Text style={styles.menuItemText}>ערוך פרופיל</Text>
               </View>
               <User size={20} color="#6B7280" />
             </TouchableOpacity>
@@ -121,40 +121,40 @@ export default function OrganizerSettings() {
               </View>
               <Bell size={20} color="#6B7280" />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemLast]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert('צור קשר', 'ניתן ליצור קשר במייל:\nsupport@mihrazone.com');
+              }}
+            >
+              <View style={styles.menuItemRight}>
+                <ChevronLeft size={20} color="#9CA3AF" />
+                <Text style={styles.menuItemText}>צור קשר</Text>
+              </View>
+              <MessageCircle size={20} color="#6B7280" />
+            </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>תמיכה</Text>
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('אודות', 'Mihrazone v1.0\n\nאפליקציה לניהול מכרזי עבודה מהירים');
-              }}
-            >
-              <View style={styles.menuItemRight}>
-                <ChevronLeft size={20} color="#9CA3AF" />
-                <Text style={styles.menuItemText}>אודות</Text>
+          <Text style={styles.sectionTitle}>אזור מפתחים</Text>
+          <TouchableOpacity
+            style={styles.devCard}
+            onPress={handleSwitchRole}
+            activeOpacity={0.7}
+          >
+            <View style={styles.devCardContent}>
+              <View style={styles.devCardIcon}>
+                <RefreshCw size={24} color="#FFFFFF" />
               </View>
-              <Info size={20} color="#6B7280" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                Alert.alert('פרטיות', 'מדיניות פרטיות בקרוב...');
-              }}
-            >
-              <View style={styles.menuItemRight}>
-                <ChevronLeft size={20} color="#9CA3AF" />
-                <Text style={styles.menuItemText}>פרטיות</Text>
+              <View style={styles.devCardText}>
+                <Text style={styles.devCardTitle}>החלף למצב משתתף</Text>
+                <Text style={styles.devCardSubtitle}>עבור למשתתף לצורך בחינה</Text>
               </View>
-              <Shield size={20} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -333,5 +333,47 @@ const styles = StyleSheet.create({
   switchRoleSubtitle: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  devCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  devCardContent: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 16,
+  },
+  devCardIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F59E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  devCardText: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  devCardTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#111827',
+    marginBottom: 4,
+  },
+  devCardSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
   },
 });

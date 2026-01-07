@@ -1,10 +1,10 @@
 import { useOrganizerTenders, useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation, UIManager, Platform, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, Users, ChevronLeft, FileText, TrendingUp, CheckCircle2 } from 'lucide-react-native';
+import { Calendar, Clock, Users, ChevronLeft, FileText, TrendingUp, Info, Coins, X } from 'lucide-react-native';
 import { Tender } from '@/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -16,6 +16,47 @@ export default function OrganizerDashboard() {
   const { currentUser } = useApp();
 
   const activeTenders = tenders.filter((t) => t.status !== 'closed');
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [selectedInfo, setSelectedInfo] = useState<'how' | 'why' | 'pricing' | null>(null);
+
+  const infoCards = [
+    {
+      id: 'how' as const,
+      title: 'איך זה עובד?',
+      icon: Info,
+      color: '#3B82F6',
+      bgColor: '#EFF6FF',
+      content: 'צור מכרז חדש בקלות, בחר משתתפים מרשימת אנשי הקשר שלך או מקבוצות, ושלח הזמנות. המשתתפים יקבלו הודעה ויוכלו לאשר או לדחות את ההזמנה בלחיצה אחת.\n\nלאחר שהמכרז מתמלא, המערכת מעדכנת אוטומטית את הסטטוס ומודיעה לכולם.',
+    },
+    {
+      id: 'why' as const,
+      title: 'למה להשתמש?',
+      icon: TrendingUp,
+      color: '#8B5CF6',
+      bgColor: '#F5F3FF',
+      content: 'נהל את כל המכרזים שלך במקום אחד מאורגן ונוח. עקוב אחרי תגובות בזמן אמת, נהל מכסות בצורה חכמה, ושמור על כל הפרטים והתקשורת במקום אחד.\n\nחסוך זמן יקר והפוך את התהליך ליעיל ומקצועי.',
+    },
+    {
+      id: 'pricing' as const,
+      title: 'כמה זה עולה?',
+      icon: Coins,
+      color: '#F59E0B',
+      bgColor: '#FEF3C7',
+      content: 'המערכת חינמית לחלוטין! אין עלויות נסתרות, אין מנויים חודשיים.\n\nנהל כמה מכרזים שתרצה, הזמן כמה עובדים שתרצה, ותהנה מכל התכונות המתקדמות ללא כל תשלום.',
+    },
+  ];
+
+  const openInfoModal = (infoId: 'how' | 'why' | 'pricing') => {
+    setSelectedInfo(infoId);
+    setInfoModalVisible(true);
+  };
+
+  const closeInfoModal = () => {
+    setInfoModalVisible(false);
+    setTimeout(() => setSelectedInfo(null), 300);
+  };
+
+  const selectedCard = infoCards.find((card) => card.id === selectedInfo);
 
   useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -37,57 +78,35 @@ export default function OrganizerDashboard() {
           <Text style={styles.subtitle}>לוח הבקרה שלך</Text>
         </View>
 
-        <View style={styles.guidesSection}>
-          <View style={styles.guideCard}>
-            <View style={styles.guideIcon}>
-              <FileText size={28} color="#4F46E5" />
-            </View>
-            <Text style={styles.guideTitle}>איך זה עובד?</Text>
-            <Text style={styles.guideText}>
-              צור מכרז חדש, בחר משתתפים, ושלח הזמנות. המשתתפים יקבלו הודעה ויוכלו לאשר או לדחות את ההזמנה.
-            </Text>
-            <TouchableOpacity
-              style={styles.guideButton}
-              onPress={() => router.push('/(organizer)/tenders' as any)}
-            >
-              <Text style={styles.guideButtonText}>עבור למכרזים</Text>
-              <ChevronLeft size={16} color="#4F46E5" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.guideCard}>
-            <View style={styles.guideIcon}>
-              <TrendingUp size={28} color="#059669" />
-            </View>
-            <Text style={styles.guideTitle}>למה להשתמש במערכת?</Text>
-            <Text style={styles.guideText}>
-              נהל את כל המכרזים שלך במקום אחד. עקוב אחרי תגובות, נהל מכסות, ושמור על כל הפרטים מאורגנים.
-            </Text>
-            <TouchableOpacity
-              style={styles.guideButton}
-              onPress={() => router.push('/(organizer)/history' as any)}
-            >
-              <Text style={styles.guideButtonText}>צפה בהיסטוריה</Text>
-              <ChevronLeft size={16} color="#4F46E5" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.guideCard}>
-            <View style={styles.guideIcon}>
-              <CheckCircle2 size={28} color="#F59E0B" />
-            </View>
-            <Text style={styles.guideTitle}>כמה זה עולה?</Text>
-            <Text style={styles.guideText}>
-              המערכת חינמית לחלוטין! נהל כמה מכרזים שתרצה, הזמן כמה עובדים שתרצה, ותהנה מהנוחות המלאות.
-            </Text>
-            <TouchableOpacity
-              style={styles.guideButton}
-              onPress={() => router.push('/(organizer)/settings' as any)}
-            >
-              <Text style={styles.guideButtonText}>הגדרות</Text>
-              <ChevronLeft size={16} color="#4F46E5" />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.carouselSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContent}
+            snapToInterval={Dimensions.get('window').width - 60}
+            decelerationRate="fast"
+          >
+            {infoCards.map((card) => {
+              const IconComponent = card.icon;
+              return (
+                <TouchableOpacity
+                  key={card.id}
+                  style={[styles.infoCard, { backgroundColor: card.bgColor }]}
+                  onPress={() => openInfoModal(card.id)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.infoIconContainer, { backgroundColor: card.color }]}>
+                    <IconComponent size={28} color="#FFFFFF" />
+                  </View>
+                  <Text style={styles.infoCardTitle}>{card.title}</Text>
+                  <View style={styles.infoCardFooter}>
+            <ChevronLeft size={18} color={card.color} />
+                    <Text style={[styles.infoCardAction, { color: card.color }]}>לחץ לפרטים</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
         <View style={styles.section}>
@@ -186,6 +205,36 @@ export default function OrganizerDashboard() {
           )}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeInfoModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedCard && (
+              <>
+                <View style={styles.modalHeader}>
+                  <TouchableOpacity onPress={closeInfoModal} style={styles.modalCloseButton}>
+                    <X size={24} color="#6B7280" />
+                  </TouchableOpacity>
+                  <View style={styles.modalHeaderContent}>
+                    <View style={[styles.modalIcon, { backgroundColor: selectedCard.bgColor }]}>
+                      <selectedCard.icon size={32} color={selectedCard.color} />
+                    </View>
+                    <Text style={styles.modalTitle}>{selectedCard.title}</Text>
+                  </View>
+                </View>
+                <ScrollView style={styles.modalBody}>
+                  <Text style={styles.modalText}>{selectedCard.content}</Text>
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -416,5 +465,109 @@ const styles = StyleSheet.create({
   invitesText: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  carouselSection: {
+    marginBottom: 32,
+  },
+  carouselContent: {
+    paddingRight: 20,
+    gap: 12,
+  },
+  infoCard: {
+    width: Dimensions.get('window').width - 80,
+    borderRadius: 20,
+    padding: 24,
+    marginLeft: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  infoIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  infoCardTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#111827',
+    marginBottom: 8,
+  },
+  infoCardFooter: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  infoCardAction: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    width: '100%',
+    maxWidth: 500,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    padding: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  modalHeaderContent: {
+    alignItems: 'center',
+  },
+  modalIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: '#111827',
+    textAlign: 'center',
+  },
+  modalBody: {
+    padding: 24,
+  },
+  modalText: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#4B5563',
+    textAlign: 'center',
   },
 });

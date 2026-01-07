@@ -2,8 +2,8 @@ import { useOrganizerTenders } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, Dimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, ChevronLeft, FileText, Plus, Filter, X } from 'lucide-react-native';
-import { Tender, TenderStatus } from '@/types';
+import { Calendar, Clock, ChevronLeft, FileText, Plus, SlidersHorizontal, X } from 'lucide-react-native';
+import { Tender } from '@/types';
 import { useState, useRef, useEffect } from 'react';
 import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
 
@@ -16,7 +16,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function OrganizerTenders() {
   const tenders = useOrganizerTenders();
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
-  const [selectedStatus, setSelectedStatus] = useState<TenderStatus | 'all'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'open' | 'closed'>('open');
   const [selectedDateRange, setSelectedDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
@@ -34,8 +34,10 @@ export default function OrganizerTenders() {
   const applyFilters = (tenderList: Tender[]) => {
     let filtered = tenderList;
 
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter((t) => t.status === selectedStatus);
+    if (selectedStatus === 'open') {
+      filtered = filtered.filter((t) => t.status === 'open' || t.status === 'full');
+    } else {
+      filtered = filtered.filter((t) => t.status === 'closed');
     }
 
     if (selectedDateRange !== 'all') {
@@ -78,42 +80,26 @@ export default function OrganizerTenders() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
+          <Text style={styles.title}>מכרזים</Text>
+          <View style={styles.headerControls}>
             <TouchableOpacity
               style={styles.filterButton}
               onPress={toggleFilter}
             >
-              <Filter size={24} color="#4F46E5" />
+              <SlidersHorizontal size={22} color="#4F46E5" />
             </TouchableOpacity>
-            <View>
-              <Text style={styles.title}>מכרזים</Text>
-              <Text style={styles.subtitle}>כל המכרזים שלך</Text>
-            </View>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => router.push('/organizer/create-tender' as any)}
-        >
-          <Plus size={24} color="#FFFFFF" />
-          <Text style={styles.createButtonText}>צור מכרז חדש</Text>
-        </TouchableOpacity>
-
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.statusButtons}>
+            <View style={styles.segmentedControl}>
               <TouchableOpacity
                 style={[
-                  styles.statusButton,
-                  selectedStatus === 'open' && styles.statusButtonActive,
+                  styles.segmentButton,
+                  selectedStatus === 'open' && styles.segmentButtonActive,
                 ]}
-                onPress={() => setSelectedStatus(selectedStatus === 'open' ? 'all' : 'open')}
+                onPress={() => setSelectedStatus('open')}
               >
                 <Text
                   style={[
-                    styles.statusButtonText,
-                    selectedStatus === 'open' && styles.statusButtonTextActive,
+                    styles.segmentButtonText,
+                    selectedStatus === 'open' && styles.segmentButtonTextActive,
                   ]}
                 >
                   פתוח
@@ -121,23 +107,26 @@ export default function OrganizerTenders() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.statusButton,
-                  selectedStatus === 'closed' && styles.statusButtonActive,
+                  styles.segmentButton,
+                  selectedStatus === 'closed' && styles.segmentButtonActive,
                 ]}
-                onPress={() => setSelectedStatus(selectedStatus === 'closed' ? 'all' : 'closed')}
+                onPress={() => setSelectedStatus('closed')}
               >
                 <Text
                   style={[
-                    styles.statusButtonText,
-                    selectedStatus === 'closed' && styles.statusButtonTextActive,
+                    styles.segmentButtonText,
+                    selectedStatus === 'closed' && styles.segmentButtonTextActive,
                   ]}
                 >
                   סגור
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.sectionTitle}>סה&quot;כ {filteredTenders.length} מכרזים</Text>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>סה&quot;כ {filteredTenders.length} מכרזים</Text>
 
           {filteredTenders.length === 0 ? (
             <View style={styles.emptyState}>
@@ -252,22 +241,21 @@ export default function OrganizerTenders() {
           <View style={styles.filterSection}>
             <Text style={styles.filterSectionTitle}>סטטוס</Text>
             <View style={styles.filterOptions}>
-              {(['all', 'open', 'full', 'closed'] as const).map((status) => (
+              {(['open', 'full', 'closed'] as const).map((status) => (
                 <TouchableOpacity
                   key={status}
                   style={[
                     styles.filterOption,
-                    selectedStatus === status && styles.filterOptionActive,
+                    selectedDateRange !== 'all' && styles.filterOptionActive,
                   ]}
-                  onPress={() => setSelectedStatus(status)}
+                  onPress={() => {}}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      selectedStatus === status && styles.filterOptionTextActive,
                     ]}
                   >
-                    {status === 'all' ? 'הכל' : getStatusText(status)}
+                    {getStatusText(status)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -307,7 +295,6 @@ export default function OrganizerTenders() {
           <TouchableOpacity
             style={styles.resetButton}
             onPress={() => {
-              setSelectedStatus('all');
               setSelectedDateRange('all');
             }}
           >
@@ -323,6 +310,14 @@ export default function OrganizerTenders() {
           onPress={toggleFilter}
         />
       )}
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/organizer/create-tender' as any)}
+        activeOpacity={0.9}
+      >
+        <Plus size={28} color="#FFFFFF" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -657,5 +652,55 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
     color: '#6B7280',
+  },
+  headerControls: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+  },
+  segmentButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  segmentButtonActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: '#6B7280',
+  },
+  segmentButtonTextActive: {
+    color: '#4F46E5',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    left: 24,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#4F46E5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
 });
