@@ -10,7 +10,7 @@ export default function Index() {
   useEffect(() => {
     console.log('[Index] isInitialized:', isInitialized, 'currentUser:', currentUser?.id);
     if (isInitialized && currentUser) {
-      router.replace('/(main)/dashboard' as any);
+      router.replace('/(tabs)/dashboard' as any);
     }
   }, [currentUser, isInitialized]);
 

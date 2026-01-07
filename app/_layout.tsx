@@ -16,12 +16,11 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerBackTitle: "חזרה" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(main)" options={{ headerShown: false }} />
-      <Stack.Screen name="(organizer)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="organizer/create-tender" options={{ title: "צור מכרז" }} />
       <Stack.Screen name="organizer/tender-details" options={{ title: "פרטי מכרז" }} />
-      <Stack.Screen name="participant/home" options={{ title: "Haluka" }} />
       <Stack.Screen name="participant/tender-details" options={{ title: "הצעת עבודה" }} />
+      <Stack.Screen name="profile/edit" options={{ title: "ערוך פרופיל" }} />
     </Stack>
   );
 }

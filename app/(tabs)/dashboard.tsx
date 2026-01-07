@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerContent: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 16,
   },
@@ -434,6 +434,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+    alignItems: 'flex-end',
   },
   greeting: {
     fontSize: 24,
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   modeToggle: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     backgroundColor: '#F3F4F6',
     borderRadius: 14,
     padding: 4,
@@ -458,7 +459,7 @@ const styles = StyleSheet.create({
   },
   modeButton: {
     flex: 1,
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
@@ -490,7 +491,7 @@ const styles = StyleSheet.create({
     paddingTop: 0,
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     gap: 12,
     marginBottom: 24,
   },
@@ -525,23 +526,27 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: '#FFFFFF',
     marginBottom: 4,
+    textAlign: 'right',
   },
   statLabel: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'right',
   },
   statValueSecondary: {
     fontSize: 28,
     fontWeight: '700' as const,
     color: '#111827',
     marginBottom: 4,
+    textAlign: 'right',
   },
   statLabelSecondary: {
     fontSize: 14,
     color: '#6B7280',
+    textAlign: 'right',
   },
   createTenderCTA: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     backgroundColor: '#4F46E5',
     borderRadius: 20,
@@ -564,6 +569,7 @@ const styles = StyleSheet.create({
   },
   ctaContent: {
     flex: 1,
+    alignItems: 'flex-end',
   },
   ctaTitle: {
     fontSize: 20,
@@ -583,6 +589,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#111827',
     marginBottom: 16,
+    textAlign: 'right',
   },
   emptyState: {
     alignItems: 'center',
@@ -595,6 +602,7 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 16,
     marginBottom: 4,
+    textAlign: 'center',
   },
   emptyStateSubtext: {
     fontSize: 14,
@@ -613,7 +621,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   tenderHeader: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 8,
@@ -623,7 +631,8 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: '#111827',
     flex: 1,
-    marginLeft: 8,
+    marginRight: 8,
+    textAlign: 'right',
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -640,13 +649,14 @@ const styles = StyleSheet.create({
   organizerText: {
     fontSize: 14,
     color: '#6B7280',
+    textAlign: 'right',
   },
   tenderDetails: {
     gap: 8,
     marginBottom: 12,
   },
   detailRow: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 8,
   },
@@ -675,7 +685,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   progressHeader: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
