@@ -10,6 +10,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const [contacts] = useState<Contact[]>(MOCK_CONTACTS);
   const [groups] = useState<Group[]>(MOCK_GROUPS);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
 
 
   useEffect(() => {
@@ -19,9 +20,14 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const loadData = async () => {
     try {
       console.log('[AppContext] Loading data...');
+      
+      const storedUsers = await AsyncStorage.getItem('users');
+      const loadedUsers = storedUsers ? JSON.parse(storedUsers) : MOCK_USERS;
+      setUsers(loadedUsers);
+
       const storedUserId = await AsyncStorage.getItem('currentUserId');
       if (storedUserId) {
-        const user = MOCK_USERS.find((u) => u.id === storedUserId);
+        const user = loadedUsers.find((u: User) => u.id === storedUserId);
         if (user) {
           console.log('[AppContext] Found user:', user.id);
           setCurrentUser(user);
@@ -57,12 +63,52 @@ export const [AppProvider, useApp] = createContextHook(() => {
   };
 
   const switchUser = async (userId: string) => {
-    const user = MOCK_USERS.find((u) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     if (user) {
       await AsyncStorage.setItem('currentUserId', userId);
       setCurrentUser(user);
     }
   };
+
+  const deductCredit = useCallback(
+    async (userId: string) => {
+      const updatedUsers = users.map((u) =>
+        u.id === userId ? { ...u, credits: Math.max(0, u.credits - 1) } : u
+      );
+      setUsers(updatedUsers);
+
+      if (currentUser && currentUser.id === userId) {
+        setCurrentUser({ ...currentUser, credits: Math.max(0, currentUser.credits - 1) });
+      }
+
+      try {
+        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+      } catch (error) {
+        console.error('Failed to save users:', error);
+      }
+    },
+    [users, currentUser]
+  );
+
+  const addCredits = useCallback(
+    async (userId: string, amount: number) => {
+      const updatedUsers = users.map((u) =>
+        u.id === userId ? { ...u, credits: u.credits + amount } : u
+      );
+      setUsers(updatedUsers);
+
+      if (currentUser && currentUser.id === userId) {
+        setCurrentUser({ ...currentUser, credits: currentUser.credits + amount });
+      }
+
+      try {
+        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+      } catch (error) {
+        console.error('Failed to save users:', error);
+      }
+    },
+    [users, currentUser]
+  );
 
   const createTender = useCallback(
     async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
@@ -131,8 +177,10 @@ export const [AppProvider, useApp] = createContextHook(() => {
     createTender,
     updateInviteStatus,
     getTenderById,
-    mockUsers: MOCK_USERS,
+    mockUsers: users,
     isInitialized,
+    deductCredit,
+    addCredits,
   };
 });
 

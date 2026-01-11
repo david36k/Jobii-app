@@ -7,6 +7,7 @@ export const MOCK_USERS: User[] = [
     name: 'David Cohen',
     role: 'organizer',
     createdAt: new Date('2025-01-01'),
+    credits: 5,
   },
   {
     id: 'part-1',
@@ -14,6 +15,7 @@ export const MOCK_USERS: User[] = [
     name: 'Yossi Levi',
     role: 'participant',
     createdAt: new Date('2025-01-15'),
+    credits: 0,
   },
   {
     id: 'part-2',
@@ -21,6 +23,7 @@ export const MOCK_USERS: User[] = [
     name: 'Michal Cohen',
     role: 'participant',
     createdAt: new Date('2025-01-20'),
+    credits: 0,
   },
   {
     id: 'part-3',
@@ -28,6 +31,7 @@ export const MOCK_USERS: User[] = [
     name: 'Avi Mizrahi',
     role: 'participant',
     createdAt: new Date('2025-01-25'),
+    credits: 0,
   },
   {
     id: 'part-4',
@@ -35,6 +39,7 @@ export const MOCK_USERS: User[] = [
     name: 'Sara Ben David',
     role: 'participant',
     createdAt: new Date('2025-02-01'),
+    credits: 0,
   },
 ];
 

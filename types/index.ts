@@ -10,6 +10,7 @@ export interface User {
   name: string;
   role: UserRole;
   createdAt: Date;
+  credits: number;
 }
 
 export interface Contact {

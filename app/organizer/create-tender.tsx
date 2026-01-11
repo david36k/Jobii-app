@@ -12,14 +12,17 @@ import {
   Platform,
   ActivityIndicator,
   Modal,
+  Pressable,
 } from 'react-native';
-import { Calendar, Clock, DollarSign, Users, Check, X, Search, ChevronDown } from 'lucide-react-native';
+import { Calendar, Clock, DollarSign, Users, Check, X, Search, ChevronDown, AlertCircle } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { toast } from 'sonner-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
 export default function CreateTender() {
-  const { currentUser, createTender, contacts, groups } = useApp();
+  const { currentUser, createTender, contacts, groups, deductCredit } = useApp();
 
   const [title, setTitle] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
@@ -36,7 +39,15 @@ export default function CreateTender() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const hasNoCredits = currentUser && currentUser.credits === 0;
+
   const handleCreate = () => {
+    if (hasNoCredits) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      toast.error('אין מספיק קרדיטים');
+      return;
+    }
+
     if (!title.trim()) {
       toast.error('נא להזין כותרת');
       return;
@@ -110,6 +121,10 @@ export default function CreateTender() {
         location: location.trim() || undefined,
       });
 
+      if (currentUser) {
+        deductCredit(currentUser.id);
+      }
+
       setIsCreating(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       toast.success('המכרז נוצר בהצלחה!');
@@ -146,28 +161,58 @@ export default function CreateTender() {
   return (
     <>
       <View style={styles.container}>
+        <LinearGradient
+          colors={['#EEF2FF', '#FFFFFF', '#F9FAFB']}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFill}
+        />
         <SafeAreaView style={styles.safeArea}>
-          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          {hasNoCredits && (
+            <View style={styles.noCreditsWarning}>
+              <LinearGradient
+                colors={['#EF4444', '#DC2626']}
+                style={styles.warningGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <AlertCircle size={24} color="#FFFFFF" />
+                <View style={styles.warningContent}>
+                  <Text style={styles.warningTitle}>אין קרדיטים</Text>
+                  <Text style={styles.warningSubtitle}>הוסף קרדיטים כדי ליצור מכרז</Text>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+
+          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.field}>
-            <Text style={styles.label}>Title *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g., Wedding Event - Waiters Needed"
-              value={title}
-              onChangeText={setTitle}
-              placeholderTextColor="#9CA3AF"
-            />
+            <Text style={styles.label}>כותרת *</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="לדוגמה: אירוע חתונה - מלצרים דרושים"
+                value={title}
+                onChangeText={setTitle}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Date *</Text>
-            <TouchableOpacity
-              style={styles.inputButtonClickable}
-              onPress={() => setShowDatePicker(true)}
+            <Text style={styles.label}>תאריך *</Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.inputButton,
+                pressed && styles.inputButtonPressed,
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowDatePicker(true);
+              }}
             >
-              <Calendar size={20} color="#6B7280" />
+              <Calendar size={20} color="#4F46E5" />
               <Text style={styles.inputButtonText}>
-                {date.toLocaleDateString('en-US', {
+                {date.toLocaleDateString('he-IL', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -175,7 +220,7 @@ export default function CreateTender() {
                 })}
               </Text>
               <ChevronDown size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {showDatePicker && (
@@ -195,9 +240,9 @@ export default function CreateTender() {
 
           <View style={styles.row}>
             <View style={[styles.field, styles.flex1]}>
-              <Text style={styles.label}>Start Time *</Text>
+              <Text style={styles.label}>שעת התחלה *</Text>
               <View style={styles.inputButton}>
-                <Clock size={20} color="#6B7280" />
+                <Clock size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="09:00"
@@ -209,9 +254,9 @@ export default function CreateTender() {
             </View>
 
             <View style={[styles.field, styles.flex1]}>
-              <Text style={styles.label}>End Time *</Text>
+              <Text style={styles.label}>שעת סיום *</Text>
               <View style={styles.inputButton}>
-                <Clock size={20} color="#6B7280" />
+                <Clock size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="17:00"
@@ -225,9 +270,9 @@ export default function CreateTender() {
 
           <View style={styles.row}>
             <View style={[styles.field, styles.flex1]}>
-              <Text style={styles.label}>Pay (₪) *</Text>
+              <Text style={styles.label}>תשלום (₪) *</Text>
               <View style={styles.inputButton}>
-                <DollarSign size={20} color="#6B7280" />
+                <DollarSign size={20} color="#059669" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="500"
@@ -240,9 +285,9 @@ export default function CreateTender() {
             </View>
 
             <View style={[styles.field, styles.flex1]}>
-              <Text style={styles.label}>Quota *</Text>
+              <Text style={styles.label}>מכסה *</Text>
               <View style={styles.inputButton}>
-                <Users size={20} color="#6B7280" />
+                <Users size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="5"
@@ -256,34 +301,44 @@ export default function CreateTender() {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>Description (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Add details about the job..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              placeholderTextColor="#9CA3AF"
-            />
+            <Text style={styles.label}>תיאור (אופציונלי)</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="הוסף פרטים על העבודה..."
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
           </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>מיקום (אופציונלי)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="למשל: אולם אירועים גני התערוכה, תל אביב"
-              value={location}
-              onChangeText={setLocation}
-              placeholderTextColor="#9CA3AF"
-            />
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={styles.input}
+                placeholder="למשל: אולם אירועים גני התערוכה, תל אביב"
+                value={location}
+                onChangeText={setLocation}
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
           </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>נמענים *</Text>
-            <TouchableOpacity
-              style={styles.recipientButton}
-              onPress={() => setShowRecipientSelector(true)}
+            <Pressable
+              style={({ pressed }) => [
+                styles.recipientButton,
+                pressed && styles.recipientButtonPressed,
+              ]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setShowRecipientSelector(true);
+              }}
             >
               <Users size={20} color="#4F46E5" />
               <Text style={styles.recipientButtonText}>
@@ -291,20 +346,33 @@ export default function CreateTender() {
                   ? 'בחר נמענים'
                   : `${selectedContacts.length} אנשי קשר, ${selectedGroups.length} קבוצות`}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.createButton, isCreating && styles.createButtonDisabled]} 
+          <Pressable 
+            style={({ pressed }) => [
+              styles.createButton,
+              (isCreating || hasNoCredits) && styles.createButtonDisabled,
+              pressed && !isCreating && !hasNoCredits && styles.createButtonPressed,
+            ]}
             onPress={handleCreate}
-            disabled={isCreating}
+            disabled={isCreating || hasNoCredits}
           >
-            {isCreating ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.createButtonText}>צור מכרז</Text>
-            )}
-          </TouchableOpacity>
+            <LinearGradient
+              colors={hasNoCredits ? ['#9CA3AF', '#6B7280'] : ['#6366F1', '#4F46E5']}
+              style={styles.createButtonGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              {isCreating ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.createButtonText}>
+                  {hasNoCredits ? 'אין קרדיטים' : 'צור מכרז'}
+                </Text>
+              )}
+            </LinearGradient>
+          </Pressable>
           </ScrollView>
         </SafeAreaView>
       </View>
@@ -316,7 +384,7 @@ export default function CreateTender() {
         onRequestClose={() => setShowRecipientSelector(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
+          <BlurView intensity={90} tint="light" style={styles.modalHeader}>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setShowRecipientSelector(false)}
@@ -325,7 +393,7 @@ export default function CreateTender() {
             </TouchableOpacity>
             <Text style={styles.modalTitle}>בחר נמענים</Text>
             <View style={{ width: 40 }} />
-          </View>
+          </BlurView>
 
           <View style={styles.searchContainer}>
             <Search size={20} color="#6B7280" />
@@ -338,14 +406,17 @@ export default function CreateTender() {
             />
           </View>
 
-          <ScrollView style={styles.modalContent}>
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
             {filteredGroups.length > 0 && (
               <View style={styles.recipientSection}>
                 <Text style={styles.recipientSectionTitle}>קבוצות</Text>
                 {filteredGroups.map((group) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={group.id}
-                    style={styles.recipientItem}
+                    style={({ pressed }) => [
+                      styles.recipientItem,
+                      pressed && styles.recipientItemPressed,
+                    ]}
                     onPress={() => toggleGroup(group.id)}
                   >
                     <View style={styles.recipientInfo}>
@@ -364,7 +435,7 @@ export default function CreateTender() {
                         <Check size={16} color="#FFFFFF" />
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -373,9 +444,12 @@ export default function CreateTender() {
               <View style={styles.recipientSection}>
                 <Text style={styles.recipientSectionTitle}>אנשי קשר</Text>
                 {filteredContacts.map((contact) => (
-                  <TouchableOpacity
+                  <Pressable
                     key={contact.id}
-                    style={styles.recipientItem}
+                    style={({ pressed }) => [
+                      styles.recipientItem,
+                      pressed && styles.recipientItemPressed,
+                    ]}
                     onPress={() => toggleContact(contact.id)}
                   >
                     <View style={styles.recipientInfo}>
@@ -392,7 +466,7 @@ export default function CreateTender() {
                         <Check size={16} color="#FFFFFF" />
                       )}
                     </View>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
               </View>
             )}
@@ -405,14 +479,24 @@ export default function CreateTender() {
             )}
           </ScrollView>
 
-          <View style={styles.modalFooter}>
+          <BlurView intensity={90} tint="light" style={styles.modalFooter}>
             <TouchableOpacity
               style={styles.doneButton}
-              onPress={() => setShowRecipientSelector(false)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setShowRecipientSelector(false);
+              }}
             >
-              <Text style={styles.doneButtonText}>סיים ({selectedContacts.length + selectedGroups.length})</Text>
+              <LinearGradient
+                colors={['#6366F1', '#4F46E5']}
+                style={styles.doneButtonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.doneButtonText}>סיים ({selectedContacts.length + selectedGroups.length})</Text>
+              </LinearGradient>
             </TouchableOpacity>
-          </View>
+          </BlurView>
         </SafeAreaView>
       </Modal>
     </>
@@ -422,10 +506,40 @@ export default function CreateTender() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
   },
   safeArea: {
     flex: 1,
+  },
+  noCreditsWarning: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  warningGradient: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  warningContent: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  warningTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  warningSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   scrollView: {
     flex: 1,
@@ -438,152 +552,129 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600' as const,
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 10,
+    textAlign: 'right',
+  },
+  inputWrapper: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
     padding: 16,
     fontSize: 16,
     color: '#111827',
+    textAlign: 'right',
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
   inputButton: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
     padding: 16,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
-  inputButtonClickable: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
+  inputButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   inputButtonText: {
     fontSize: 16,
     color: '#111827',
     flex: 1,
+    textAlign: 'right',
   },
   timeInput: {
     fontSize: 16,
     color: '#111827',
     flex: 1,
     padding: 0,
+    textAlign: 'right',
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     gap: 12,
   },
   flex1: {
     flex: 1,
   },
   recipientButton: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 2,
     borderColor: '#4F46E5',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     gap: 12,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recipientButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   recipientButtonText: {
     fontSize: 16,
     color: '#4F46E5',
     fontWeight: '600' as const,
     flex: 1,
-  },
-  recipientSelector: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  recipientSection: {
-    marginBottom: 16,
-  },
-  recipientSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#6B7280',
-    marginBottom: 12,
-  },
-  recipientItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  recipientInfo: {
-    flex: 1,
-  },
-  recipientName: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#111827',
-    marginBottom: 2,
-  },
-  recipientDetail: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#D1D5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxSelected: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+    textAlign: 'right',
   },
   createButton: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
     marginTop: 20,
     shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#FFFFFF',
+    shadowRadius: 20,
+    elevation: 10,
   },
   createButtonDisabled: {
     opacity: 0.6,
+    shadowOpacity: 0.1,
+  },
+  createButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  createButtonGradient: {
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  createButtonText: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
   },
   modalHeader: {
     flexDirection: 'row-reverse' as const,
@@ -591,13 +682,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(243, 244, 246, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -609,12 +700,17 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row-reverse' as const,
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     margin: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   searchInput: {
     flex: 1,
@@ -625,6 +721,62 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  recipientSection: {
+    marginBottom: 24,
+  },
+  recipientSectionTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#6B7280',
+    marginBottom: 12,
+    textAlign: 'right',
+  },
+  recipientItem: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  recipientItemPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  recipientInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  recipientName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#111827',
+    marginBottom: 2,
+  },
+  recipientDetail: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
   },
   emptySearch: {
     alignItems: 'center',
@@ -640,17 +792,24 @@ const styles = StyleSheet.create({
   modalFooter: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
   },
   doneButton: {
-    backgroundColor: '#4F46E5',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  doneButtonGradient: {
     paddingVertical: 16,
-    borderRadius: 12,
     alignItems: 'center',
   },
   doneButtonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+    fontSize: 18,
+    fontWeight: '700' as const,
     color: '#FFFFFF',
   },
 });

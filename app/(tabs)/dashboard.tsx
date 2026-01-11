@@ -1,6 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   View,
@@ -11,8 +11,12 @@ import {
   LayoutAnimation,
   UIManager,
   Platform,
+  Animated,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { 
   Briefcase, 
   Users, 
@@ -22,7 +26,9 @@ import {
   Plus,
   TrendingUp,
   CalendarClock,
-  ChevronLeft
+  ChevronLeft,
+  Coins,
+  Sparkles,
 } from 'lucide-react-native';
 import { Tender } from '@/types';
 import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
@@ -34,8 +40,9 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 type Mode = 'work' | 'hire';
 
 export default function UnifiedDashboard() {
-  const { currentUser, tenders } = useApp();
+  const { currentUser, tenders, addCredits } = useApp();
   const [mode, setMode] = useState<Mode>('work');
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const myWork = useMemo(() => {
     if (!currentUser) return [];
@@ -85,88 +92,148 @@ export default function UnifiedDashboard() {
     }).length;
   }, [myWork, currentUser]);
 
+  const hasLowCredits = currentUser && currentUser.credits < 3;
+  const hasNoCredits = currentUser && currentUser.credits === 0;
+
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.96,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>
-              {currentUser?.name?.charAt(0) || 'U'}
-            </Text>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#EEF2FF', '#FFFFFF', '#F9FAFB']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <BlurView intensity={90} tint="light" style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.avatarPlaceholder}>
+              <LinearGradient
+                colors={['#6366F1', '#4F46E5']}
+                style={styles.avatarGradient}
+              >
+                <Text style={styles.avatarText}>
+                  {currentUser?.name?.charAt(0) || 'U'}
+                </Text>
+              </LinearGradient>
+            </View>
+            <View style={styles.headerText}>
+              <Text style={styles.greeting}>שלום, {currentUser?.name || 'משתמש'}</Text>
+              <View style={styles.creditsRow}>
+                <TouchableOpacity 
+                  style={styles.creditsButton}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (currentUser) {
+                      addCredits(currentUser.id, 10);
+                    }
+                  }}
+                >
+                  <Coins size={16} color="#F59E0B" />
+                  <Text style={styles.creditsText}>{currentUser?.credits || 0} קרדיטים</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-          <View style={styles.headerText}>
-            <Text style={styles.greeting}>שלום, {currentUser?.name || 'משתמש'}</Text>
-            <Text style={styles.subtitle}>
-              {mode === 'work' ? 'מצא עבודה' : 'גייס עובדים'}
-            </Text>
-          </View>
-        </View>
-      </View>
+        </BlurView>
 
-      <View style={styles.modeToggleContainer}>
-        <View style={styles.modeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              mode === 'work' && styles.modeButtonActive,
-            ]}
-            onPress={() => handleModeChange('work')}
-            activeOpacity={0.7}
-          >
-            <Briefcase
-              size={20}
-              color={mode === 'work' ? '#FFFFFF' : '#6B7280'}
-            />
-            <Text
+        <View style={styles.modeToggleContainer}>
+          <BlurView intensity={80} tint="light" style={styles.modeToggle}>
+            <Pressable
               style={[
-                styles.modeButtonText,
-                mode === 'work' && styles.modeButtonTextActive,
+                styles.modeButton,
+                mode === 'work' && styles.modeButtonActive,
               ]}
+              onPress={() => {
+                animateButton();
+                handleModeChange('work');
+              }}
             >
-              מחפש עבודה
-            </Text>
-          </TouchableOpacity>
+              {mode === 'work' && (
+                <LinearGradient
+                  colors={['#6366F1', '#4F46E5']}
+                  style={styles.modeButtonGradient}
+                />
+              )}
+              <Briefcase
+                size={20}
+                color={mode === 'work' ? '#FFFFFF' : '#6B7280'}
+                style={{ zIndex: 1 }}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  mode === 'work' && styles.modeButtonTextActive,
+                ]}
+              >
+                מחפש עבודה
+              </Text>
+            </Pressable>
 
-          <TouchableOpacity
-            style={[
-              styles.modeButton,
-              mode === 'hire' && styles.modeButtonActive,
-            ]}
-            onPress={() => handleModeChange('hire')}
-            activeOpacity={0.7}
-          >
-            <Users
-              size={20}
-              color={mode === 'hire' ? '#FFFFFF' : '#6B7280'}
-            />
-            <Text
+            <Pressable
               style={[
-                styles.modeButtonText,
-                mode === 'hire' && styles.modeButtonTextActive,
+                styles.modeButton,
+                mode === 'hire' && styles.modeButtonActive,
               ]}
+              onPress={() => {
+                animateButton();
+                handleModeChange('hire');
+              }}
             >
-              מגייס עובדים
-            </Text>
-          </TouchableOpacity>
+              {mode === 'hire' && (
+                <LinearGradient
+                  colors={['#6366F1', '#4F46E5']}
+                  style={styles.modeButtonGradient}
+                />
+              )}
+              <Users
+                size={20}
+                color={mode === 'hire' ? '#FFFFFF' : '#6B7280'}
+                style={{ zIndex: 1 }}
+              />
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  mode === 'hire' && styles.modeButtonTextActive,
+                ]}
+              >
+                מגייס עובדים
+              </Text>
+            </Pressable>
+          </BlurView>
         </View>
-      </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {mode === 'work' ? (
-          <WorkView
-            tenders={myWork}
-            currentUser={currentUser}
-            monthlyEarnings={monthlyEarnings}
-            upcomingShifts={upcomingShifts}
-          />
-        ) : (
-          <HireView tenders={myTenders} />
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {mode === 'work' ? (
+            <WorkView
+              tenders={myWork}
+              currentUser={currentUser}
+              monthlyEarnings={monthlyEarnings}
+              upcomingShifts={upcomingShifts}
+            />
+          ) : (
+            <HireView tenders={myTenders} hasNoCredits={hasNoCredits || false} hasLowCredits={hasLowCredits || false} />
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -205,19 +272,28 @@ function WorkView({
     <>
       <View style={styles.statsRow}>
         <View style={[styles.statCard, styles.statCardPrimary]}>
-          <View style={styles.statIconContainer}>
-            <TrendingUp size={24} color="#FFFFFF" />
-          </View>
-          <Text style={styles.statValue}>₪{monthlyEarnings.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>רווח החודש</Text>
+          <LinearGradient
+            colors={['#6366F1', '#4F46E5', '#4338CA']}
+            style={styles.statCardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.statIconContainer}>
+              <TrendingUp size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.statValue}>₪{monthlyEarnings.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>רווח החודש</Text>
+          </LinearGradient>
         </View>
 
         <View style={styles.statCard}>
-          <View style={[styles.statIconContainer, styles.statIconSecondary]}>
-            <CalendarClock size={24} color="#4F46E5" />
+          <View style={styles.statCardWhite}>
+            <View style={[styles.statIconContainer, styles.statIconSecondary]}>
+              <CalendarClock size={24} color="#4F46E5" />
+            </View>
+            <Text style={styles.statValueSecondary}>{upcomingShifts}</Text>
+            <Text style={styles.statLabelSecondary}>משמרות קרובות</Text>
           </View>
-          <Text style={styles.statValueSecondary}>{upcomingShifts}</Text>
-          <Text style={styles.statLabelSecondary}>משמרות קרובות</Text>
         </View>
       </View>
 
@@ -240,11 +316,16 @@ function WorkView({
             if (!status || !invite) return null;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={tender.id}
-                style={styles.tenderCard}
-                onPress={() => router.push(`/participant/tender-details?id=${tender.id}` as any)}
-                activeOpacity={0.7}
+                style={({ pressed }) => [
+                  styles.tenderCard,
+                  pressed && styles.tenderCardPressed,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(`/participant/tender-details?id=${tender.id}` as any);
+                }}
               >
                 <View style={styles.tenderHeader}>
                   <View
@@ -285,7 +366,7 @@ function WorkView({
                     <Text style={styles.pendingText}>לחץ לתגובה</Text>
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             );
           })
         )}
@@ -294,26 +375,58 @@ function WorkView({
   );
 }
 
-function HireView({ tenders }: { tenders: Tender[] }) {
+function HireView({ tenders, hasNoCredits, hasLowCredits }: { tenders: Tender[]; hasNoCredits: boolean; hasLowCredits: boolean }) {
   const getAcceptedCount = (tender: Tender) => {
     return tender.invites.filter((inv) => inv.status === 'accepted').length;
   };
 
   return (
     <>
+      {hasLowCredits && (
+        <TouchableOpacity style={styles.creditsBanner} activeOpacity={0.8}>
+          <LinearGradient
+            colors={hasNoCredits ? ['#EF4444', '#DC2626'] : ['#F59E0B', '#D97706']}
+            style={styles.creditsBannerGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Sparkles size={24} color="#FFFFFF" />
+            <View style={styles.creditsBannerContent}>
+              <Text style={styles.creditsBannerTitle}>
+                {hasNoCredits ? 'אזלו הקרדיטים' : 'קרדיטים נמוכים'}
+              </Text>
+              <Text style={styles.creditsBannerSubtitle}>
+                {hasNoCredits ? 'הוסף קרדיטים כדי ליצור מכרז' : 'מומלץ להוסיף קרדיטים'}
+              </Text>
+            </View>
+            <ChevronLeft size={20} color="#FFFFFF" />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={styles.createTenderCTA}
-        onPress={() => router.push('/organizer/create-tender' as any)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          router.push('/organizer/create-tender' as any);
+        }}
         activeOpacity={0.8}
       >
-        <View style={styles.ctaIconContainer}>
-          <Plus size={32} color="#FFFFFF" />
-        </View>
-        <View style={styles.ctaContent}>
-          <Text style={styles.ctaTitle}>צור מכרז חדש</Text>
-          <Text style={styles.ctaSubtitle}>גייס עובדים במהירות ובקלות</Text>
-        </View>
-        <ChevronLeft size={24} color="#FFFFFF" />
+        <LinearGradient
+          colors={['#6366F1', '#4F46E5']}
+          style={styles.ctaGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.ctaIconContainer}>
+            <Plus size={32} color="#FFFFFF" />
+          </View>
+          <View style={styles.ctaContent}>
+            <Text style={styles.ctaTitle}>צור מכרז חדש</Text>
+            <Text style={styles.ctaSubtitle}>גייס עובדים במהירות ובקלות</Text>
+          </View>
+          <ChevronLeft size={24} color="#FFFFFF" />
+        </LinearGradient>
       </TouchableOpacity>
 
       <View style={styles.section}>
@@ -333,11 +446,16 @@ function HireView({ tenders }: { tenders: Tender[] }) {
             const progress = tender.quota > 0 ? (acceptedCount / tender.quota) * 100 : 0;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={tender.id}
-                style={styles.tenderCard}
-                onPress={() => router.push(`/organizer/tender-details?id=${tender.id}` as any)}
-                activeOpacity={0.7}
+                style={({ pressed }) => [
+                  styles.tenderCard,
+                  pressed && styles.tenderCardPressed,
+                ]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push(`/organizer/tender-details?id=${tender.id}` as any);
+                }}
               >
                 <View style={styles.tenderHeader}>
                   <View
@@ -395,7 +513,7 @@ function HireView({ tenders }: { tenders: Tender[] }) {
                     />
                   </View>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })
         )}
@@ -407,12 +525,17 @@ function HireView({ tenders }: { tenders: Tender[] }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    overflow: 'hidden',
   },
   headerContent: {
     flexDirection: 'row-reverse',
@@ -423,7 +546,16 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#4F46E5',
+    overflow: 'hidden',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  avatarGradient: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -440,22 +572,40 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700' as const,
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  subtitle: {
+  creditsRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+  },
+  creditsButton: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.3)',
+  },
+  creditsText: {
     fontSize: 14,
-    color: '#6B7280',
+    fontWeight: '600' as const,
+    color: '#D97706',
   },
   modeToggleContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingVertical: 16,
   },
   modeToggle: {
     flexDirection: 'row-reverse',
-    backgroundColor: '#F3F4F6',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 4,
     gap: 4,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   modeButton: {
     flex: 1,
@@ -464,21 +614,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 8,
+    position: 'relative',
   },
   modeButtonActive: {
-    backgroundColor: '#4F46E5',
     shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modeButtonGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 12,
   },
   modeButtonText: {
     fontSize: 15,
     fontWeight: '600' as const,
     color: '#6B7280',
+    zIndex: 1,
   },
   modeButtonTextActive: {
     color: '#FFFFFF',
@@ -497,22 +656,26 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    borderRadius: 24,
+    overflow: 'hidden',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  statCardPrimary: {
-    backgroundColor: '#4F46E5',
+  statCardPrimary: {},
+  statCardGradient: {
+    padding: 20,
+  },
+  statCardWhite: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    padding: 20,
   },
   statIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -522,7 +685,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700' as const,
     color: '#FFFFFF',
     marginBottom: 4,
@@ -530,11 +693,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'right',
+    fontWeight: '500' as const,
   },
   statValueSecondary: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700' as const,
     color: '#111827',
     marginBottom: 4,
@@ -544,25 +708,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     textAlign: 'right',
+    fontWeight: '500' as const,
   },
-  createTenderCTA: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    backgroundColor: '#4F46E5',
+  creditsBanner: {
     borderRadius: 20,
-    padding: 20,
-    marginBottom: 24,
-    gap: 16,
-    shadowColor: '#4F46E5',
+    overflow: 'hidden',
+    marginBottom: 16,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
   },
+  creditsBannerGradient: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    padding: 20,
+    gap: 16,
+  },
+  creditsBannerContent: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  creditsBannerTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  creditsBannerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  createTenderCTA: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  ctaGradient: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    padding: 24,
+    gap: 16,
+  },
   ctaIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -572,21 +769,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   ctaTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700' as const,
     color: '#FFFFFF',
     marginBottom: 4,
   },
   ctaSubtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   section: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600' as const,
+    fontSize: 22,
+    fontWeight: '700' as const,
     color: '#111827',
     marginBottom: 16,
     textAlign: 'right',
@@ -610,15 +807,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tenderCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 24,
+    padding: 20,
     marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  tenderCardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   tenderHeader: {
     flexDirection: 'row-reverse',
@@ -635,9 +838,9 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
@@ -673,7 +876,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: 'rgba(0, 0, 0, 0.05)',
     alignItems: 'center',
   },
   pendingText: {
