@@ -113,16 +113,16 @@ export default function UnifiedDashboard() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#EEF2FF', '#FFFFFF', '#F9FAFB']}
+        colors={mode === 'work' ? ['#D1FAE5', '#FFFFFF', '#F0FDF4'] : ['#EEF2FF', '#FFFFFF', '#F9FAFB']}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <BlurView intensity={90} tint="light" style={styles.header}>
           <View style={styles.headerContent}>
-            <View style={styles.avatarPlaceholder}>
+            <View style={[styles.avatarPlaceholder, { shadowColor: mode === 'work' ? '#10B981' : '#4F46E5' }]}>
               <LinearGradient
-                colors={['#6366F1', '#4F46E5']}
+                colors={mode === 'work' ? ['#10B981', '#059669'] : ['#6366F1', '#4F46E5']}
                 style={styles.avatarGradient}
               >
                 <Text style={styles.avatarText}>
@@ -134,7 +134,13 @@ export default function UnifiedDashboard() {
               <Text style={styles.greeting}>שלום, {currentUser?.name || 'משתמש'}</Text>
               <View style={styles.creditsRow}>
                 <TouchableOpacity 
-                  style={styles.creditsButton}
+                  style={[
+                    styles.creditsButton,
+                    {
+                      backgroundColor: mode === 'work' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(251, 191, 36, 0.1)',
+                      borderColor: mode === 'work' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 191, 36, 0.3)',
+                    }
+                  ]}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     if (currentUser) {
@@ -142,8 +148,8 @@ export default function UnifiedDashboard() {
                     }
                   }}
                 >
-                  <Coins size={16} color="#F59E0B" />
-                  <Text style={styles.creditsText}>{currentUser?.credits || 0} קרדיטים</Text>
+                  <Coins size={16} color={mode === 'work' ? '#10B981' : '#F59E0B'} />
+                  <Text style={[styles.creditsText, { color: mode === 'work' ? '#059669' : '#D97706' }]}>{currentUser?.credits || 0} קרדיטים</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -156,6 +162,7 @@ export default function UnifiedDashboard() {
               style={[
                 styles.modeButton,
                 mode === 'work' && styles.modeButtonActive,
+                mode === 'work' && { shadowColor: '#10B981' },
               ]}
               onPress={() => {
                 animateButton();
@@ -164,7 +171,7 @@ export default function UnifiedDashboard() {
             >
               {mode === 'work' && (
                 <LinearGradient
-                  colors={['#6366F1', '#4F46E5']}
+                  colors={['#10B981', '#059669']}
                   style={styles.modeButtonGradient}
                 />
               )}
@@ -271,9 +278,9 @@ function WorkView({
   return (
     <>
       <View style={styles.statsRow}>
-        <View style={[styles.statCard, styles.statCardPrimary]}>
+        <View style={[styles.statCard, styles.statCardPrimary, { shadowColor: '#10B981' }]}>
           <LinearGradient
-            colors={['#6366F1', '#4F46E5', '#4338CA']}
+            colors={['#10B981', '#059669', '#047857']}
             style={styles.statCardGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -289,7 +296,7 @@ function WorkView({
         <View style={styles.statCard}>
           <View style={styles.statCardWhite}>
             <View style={[styles.statIconContainer, styles.statIconSecondary]}>
-              <CalendarClock size={24} color="#4F46E5" />
+              <CalendarClock size={24} color="#10B981" />
             </View>
             <Text style={styles.statValueSecondary}>{upcomingShifts}</Text>
             <Text style={styles.statLabelSecondary}>משמרות קרובות</Text>
@@ -547,7 +554,6 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -582,17 +588,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.3)',
   },
   creditsText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#D97706',
   },
   modeToggleContainer: {
     paddingHorizontal: 20,
@@ -619,7 +622,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   modeButtonActive: {
-    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -658,7 +660,6 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 24,
     overflow: 'hidden',
-    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -682,7 +683,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   statIconSecondary: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#D1FAE5',
   },
   statValue: {
     fontSize: 32,
