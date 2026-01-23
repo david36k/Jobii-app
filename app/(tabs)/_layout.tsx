@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard } from 'lucide-react-native';
+import { LayoutDashboard, Archive } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { StyleSheet } from 'react-native';
 
@@ -12,6 +12,9 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
           position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
           borderTopWidth: 0,
           backgroundColor: 'transparent',
           elevation: 0,
@@ -34,8 +37,15 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'ראשי',
+          title: 'דשבורד',
           tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="archive"
+        options={{
+          title: 'ארכיון',
+          tabBarIcon: ({ color, size }) => <Archive size={size} color={color} />,
         }}
       />
       <Tabs.Screen
