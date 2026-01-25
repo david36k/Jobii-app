@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [tenders, setTenders] = useState<Tender[]>([]);
-  const [contacts] = useState<Contact[]>(MOCK_CONTACTS);
+  const [contacts, setContacts] = useState<Contact[]>(MOCK_CONTACTS);
   const [groups] = useState<Group[]>(MOCK_GROUPS);
   const [isInitialized, setIsInitialized] = useState(false);
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
@@ -168,6 +168,70 @@ export const [AppProvider, useApp] = createContextHook(() => {
     [tenders]
   );
 
+  const addContact = useCallback(
+    async (contact: Omit<Contact, 'id'>) => {
+      const newContact: Contact = {
+        ...contact,
+        id: `contact-${Date.now()}`,
+      };
+      const updatedContacts = [...contacts, newContact];
+      setContacts(updatedContacts);
+      try {
+        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
+      } catch (error) {
+        console.error('Failed to save contact:', error);
+      }
+      return newContact;
+    },
+    [contacts]
+  );
+
+  const addMultipleContacts = useCallback(
+    async (newContacts: Omit<Contact, 'id'>[]) => {
+      const contactsWithIds = newContacts.map((contact, index) => ({
+        ...contact,
+        id: `contact-${Date.now()}-${index}`,
+      }));
+      const updatedContacts = [...contacts, ...contactsWithIds];
+      setContacts(updatedContacts);
+      try {
+        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
+      } catch (error) {
+        console.error('Failed to save contacts:', error);
+      }
+      return contactsWithIds;
+    },
+    [contacts]
+  );
+
+  const deleteContact = useCallback(
+    async (contactId: string) => {
+      const updatedContacts = contacts.filter((c) => c.id !== contactId);
+      setContacts(updatedContacts);
+      try {
+        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
+      } catch (error) {
+        console.error('Failed to delete contact:', error);
+      }
+    },
+    [contacts]
+  );
+
+  const updateContact = useCallback(
+    async (contactId: string, updates: Partial<Contact>) => {
+      const updatedContacts = contacts.map((c) =>
+        c.id === contactId ? { ...c, ...updates } : c
+      );
+      setContacts(updatedContacts);
+      try {
+        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
+      } catch (error) {
+        console.error('Failed to update contact:', error);
+      }
+    },
+    [contacts]
+  );
+
   return {
     currentUser,
     switchUser,
@@ -181,6 +245,10 @@ export const [AppProvider, useApp] = createContextHook(() => {
     isInitialized,
     deductCredit,
     addCredits,
+    addContact,
+    addMultipleContacts,
+    deleteContact,
+    updateContact,
   };
 });
 

@@ -154,26 +154,28 @@ export default function UnifiedDashboard() {
             </TouchableOpacity>
             <View style={styles.headerText}>
               <Text style={styles.greeting}>שלום, {currentUser?.name || 'משתמש'}</Text>
-              <View style={styles.creditsRow}>
-                <TouchableOpacity 
-                  style={[
-                    styles.creditsButton,
-                    {
-                      backgroundColor: mode === 'work' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(251, 191, 36, 0.1)',
-                      borderColor: mode === 'work' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(251, 191, 36, 0.3)',
-                    }
-                  ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    if (currentUser) {
-                      addCredits(currentUser.id, 10);
-                    }
-                  }}
-                >
-                  <Coins size={16} color={mode === 'work' ? '#10B981' : '#F59E0B'} />
-                  <Text style={[styles.creditsText, { color: mode === 'work' ? '#059669' : '#D97706' }]}>{currentUser?.credits || 0} קרדיטים</Text>
-                </TouchableOpacity>
-              </View>
+              {mode === 'hire' && (
+                <View style={styles.creditsRow}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.creditsButton,
+                      {
+                        backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                        borderColor: 'rgba(251, 191, 36, 0.3)',
+                      }
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      if (currentUser) {
+                        addCredits(currentUser.id, 10);
+                      }
+                    }}
+                  >
+                    <Coins size={16} color="#F59E0B" />
+                    <Text style={[styles.creditsText, { color: '#D97706' }]}>{currentUser?.credits || 0} קרדיטים</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </View>
         </BlurView>

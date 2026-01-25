@@ -31,7 +31,7 @@ export default function TabsLayout() {
           },
           {
             route: '/archive',
-            label: 'ארכיון',
+            label: 'מידע',
             icon: Archive,
           },
         ]}

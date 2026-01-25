@@ -2,11 +2,12 @@ import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit } from 'lucide-react-native';
+import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Settings() {
-  const { currentUser, switchUser } = useApp();
+  const { currentUser, switchUser, addCredits } = useApp();
 
   const handleLogout = () => {
     Alert.alert('התנתק', 'האם אתה בטוח שברצונך להתנתק?', [
@@ -55,6 +56,37 @@ export default function Settings() {
             </View>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.creditsCard}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (currentUser) {
+              addCredits(currentUser.id, 10);
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#F59E0B', '#D97706']}
+            style={styles.creditsGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.creditsContent}>
+              <View style={styles.creditsIconContainer}>
+                <Coins size={32} color="#FFFFFF" />
+              </View>
+              <View style={styles.creditsInfo}>
+                <Text style={styles.creditsLabel}>הקרדיטים שלי</Text>
+                <Text style={styles.creditsValue}>{currentUser?.credits || 0} קרדיטים</Text>
+              </View>
+            </View>
+            <View style={styles.addCreditsButton}>
+              <Plus size={24} color="#FFFFFF" />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>כללי</Text>
@@ -191,6 +223,57 @@ const styles = StyleSheet.create({
   profilePhone: {
     fontSize: 16,
     color: '#6B7280',
+  },
+  creditsCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  creditsGradient: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  creditsContent: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  creditsIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creditsInfo: {
+    alignItems: 'flex-end',
+  },
+  creditsLabel: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 4,
+  },
+  creditsValue: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
+  },
+  addCreditsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   section: {
     marginBottom: 24,
