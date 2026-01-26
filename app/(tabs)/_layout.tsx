@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { View } from 'react-native';
-import { LayoutDashboard, Archive, Users } from 'lucide-react-native';
+import { LayoutDashboard, Archive, Users, UsersRound } from 'lucide-react-native';
 import BottomNavBar from '@/components/BottomNavBar';
 
 export default function TabsLayout() {
@@ -13,6 +13,7 @@ export default function TabsLayout() {
       >
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="contacts" />
+        <Stack.Screen name="groups" />
         <Stack.Screen name="archive" />
         <Stack.Screen name="settings" />
       </Stack>
@@ -28,6 +29,11 @@ export default function TabsLayout() {
             route: '/contacts',
             label: 'אנשי קשר',
             icon: Users,
+          },
+          {
+            route: '/groups',
+            label: 'קבוצות',
+            icon: UsersRound,
           },
           {
             route: '/archive',

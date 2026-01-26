@@ -34,6 +34,9 @@ export default function BottomNavBar({ items }: BottomNavBarProps) {
     if (route === '/dashboard') {
       return pathname === '/' || pathname === '/dashboard';
     }
+    if (route === '/groups') {
+      return pathname === '/groups';
+    }
     return pathname === route;
   };
 
@@ -104,33 +107,35 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
-    right: 0,
-    height: 85,
+    left: 16,
+    right: 16,
+    marginBottom: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
+        shadowColor: '#4F46E5',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 24,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
   blur: {
-    flex: 1,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 70, 229, 0.1)',
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   innerContainer: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: 8,
   },
   itemContainer: {
     flex: 1,
@@ -139,10 +144,11 @@ const styles = StyleSheet.create({
   item: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 18,
     position: 'relative',
+    minWidth: 70,
   },
   activeBackground: {
     position: 'absolute',
@@ -151,11 +157,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: '#EEF2FF',
-    borderRadius: 16,
+    borderRadius: 18,
   },
   label: {
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 4,
     textAlign: 'center',
+    letterSpacing: -0.2,
   },
 });
