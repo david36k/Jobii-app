@@ -232,6 +232,26 @@ export const [AppProvider, useApp] = createContextHook(() => {
     [contacts]
   );
 
+  const deleteAccount = useCallback(
+    async (userId: string) => {
+      try {
+        const updatedUsers = users.filter((u) => u.id !== userId);
+        setUsers(updatedUsers);
+        
+        if (currentUser && currentUser.id === userId) {
+          setCurrentUser(null);
+          await AsyncStorage.removeItem('currentUserId');
+        }
+        
+        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+        console.log('[AppContext] Account deleted:', userId);
+      } catch (error) {
+        console.error('[AppContext] Failed to delete account:', error);
+      }
+    },
+    [users, currentUser]
+  );
+
   return {
     currentUser,
     switchUser,
@@ -249,6 +269,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     addMultipleContacts,
     deleteContact,
     updateContact,
+    deleteAccount,
   };
 });
 

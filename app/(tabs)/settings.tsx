@@ -1,13 +1,13 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus } from 'lucide-react-native';
+import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus, AlertTriangle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Settings() {
-  const { currentUser, switchUser, addCredits } = useApp();
+  const { currentUser, switchUser, addCredits, deleteAccount } = useApp();
 
   const handleLogout = () => {
     Alert.alert('התנתק', 'האם אתה בטוח שברצונך להתנתק?', [
@@ -147,11 +147,57 @@ export default function Settings() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>אודות</Text>
           <View style={styles.aboutCard}>
-            <Text style={styles.aboutTitle}>Mihrazone</Text>
+            <Text style={styles.aboutTitle}>Jobii</Text>
             <Text style={styles.aboutText}>
               מערכת ניהול מכרזים חכמה לגיוס עובדים מהיר ויעיל
             </Text>
             <Text style={styles.version}>גרסה 1.0.0</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>אזור מסוכן</Text>
+          <View style={styles.dangerZone}>
+            <View style={styles.dangerHeader}>
+              <AlertTriangle size={24} color="#DC2626" strokeWidth={2} />
+              <Text style={styles.dangerTitle}>מחיקת חשבון</Text>
+            </View>
+            <Text style={styles.dangerDescription}>
+              פעולה זו תמחק את כל הנתונים שלך לצמיתות. לא ניתן לשחזר את החשבון לאחר המחיקה.
+            </Text>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => {
+                if (Platform.OS !== 'web') {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                }
+                Alert.alert(
+                  'האם אתה בטוח?',
+                  'פעולה זו תמחק את החשבון שלך לצמיתות ולא ניתנת לביטול.',
+                  [
+                    {
+                      text: 'ביטול',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'מחק',
+                      style: 'destructive',
+                      onPress: async () => {
+                        if (currentUser) {
+                          await deleteAccount(currentUser.id);
+                          setTimeout(() => {
+                            router.replace('/');
+                          }, 100);
+                        }
+                      },
+                    },
+                  ]
+                );
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.deleteButtonText}>מחיקת חשבון</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -373,5 +419,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: '#DC2626',
+  },
+  dangerZone: {
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  dangerHeader: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  dangerTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: '#DC2626',
+  },
+  dangerDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 20,
+    textAlign: 'right',
+  },
+  deleteButton: {
+    backgroundColor: '#DC2626',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  deleteButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
 });

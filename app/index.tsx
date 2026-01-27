@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { Phone, CheckCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +25,8 @@ export default function Index() {
   const [otpCode, setOtpCode] = useState<string>('');
   const [showOtp, setShowOtp] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
@@ -125,7 +128,7 @@ export default function Index() {
                 <View style={styles.logoCircle}>
                   <Phone size={48} color="#4F46E5" strokeWidth={2} />
                 </View>
-                <Text style={styles.title}>Mihrazone</Text>
+                <Text style={styles.title}>Jobii</Text>
                 <Text style={styles.subtitle}>התחבר עם מספר הטלפון שלך</Text>
               </View>
 
@@ -199,6 +202,7 @@ export default function Index() {
                   <TouchableOpacity
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowTermsModal(true);
                     }}
                   >
                     <Text style={styles.footerLink}>תנאי שימוש</Text>
@@ -207,6 +211,7 @@ export default function Index() {
                   <TouchableOpacity
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setShowPrivacyModal(true);
                     }}
                   >
                     <Text style={styles.footerLink}>מדיניות פרטיות</Text>
@@ -220,6 +225,66 @@ export default function Index() {
           </SafeAreaView>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showTermsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowTermsModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <BlurView intensity={80} tint="light" style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>תנאי שימוש</Text>
+            <TouchableOpacity
+              onPress={() => setShowTermsModal(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </BlurView>
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalContentContainer}>
+            <Text style={styles.modalText}>
+              לורם איפסום דולור סיט אמט, קונסקטורר אדיפיסינג אלית קולורס מונפרד אדנדום סילקוף, מרגשי ומרגשח. עמחליף לפרומי בלוף קינץ תתיח לרעח. לת צשחמי צש בליא, מנסוטו צמלח לביקו ננבי, צמוקו בלוקריה שיצמה ברורק.
+
+              קונדימנטום קורוס בליקרה, נונסטי קלובר בריקנה סטום, לפריקך תצטריק לרטי. סחטיר בלובק. תצטריק אלט נולום ארווס סאפיאן - פוסיליס קוויס, אקווזמן קוואזי במר מודוף. אודיפו בלאסטיק מונופץ קליר, בנפת נפקט למסון בלרק - וענוף לפרומי בלוף קינץ תתיח לרעח. לת צשחמי.
+
+סחטיר בלובק. תצטריק אלט נולום ארווס סאפיאן - פוסיליס קוויס, אקווזמן קוואזי במר מודוף. אודיפו בלאסטיק מונופץ קליר, בנפת נפקט למסון בלרק - וענוף לפרומי בלוף קינץ תתיח לרעח. לת צשחמי צש בליא, מנסוטו צמלח לביקו ננבי, צמוקו בלוקריה שיצמה ברורק.
+
+קולורס מונפרד אדנדום סילקוף, מרגשי ומרגשח. עמחליף קונדימנטום קורוס בליקרה, נונסטי קלובר בריקנה סטום, לפריקך תצטריק לרטי. לפרומי בלוף קינץ תתיח לרעח.
+            </Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      <Modal
+        visible={showPrivacyModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <BlurView intensity={80} tint="light" style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>מדיניות פרטיות</Text>
+            <TouchableOpacity
+              onPress={() => setShowPrivacyModal(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </BlurView>
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalContentContainer}>
+            <Text style={styles.modalText}>
+              לורם איפסום דולור סיט אמט, קונסקטורר אדיפיסינג אלית נולום ארווס סאפיאן - פוסיליס קוויס, אקווזמן קוואזי במר מודוף. קולורס מונפרד אדנדום סילקוף, מרגשי ומרגשח. עמחליף קונדימנטום קורוס בליקרה.
+
+לפרומי בלוף קינץ תתיח לרעח. לת צשחמי צש בליא, מנסוטו צמלח לביקו ננבי, צמוקו בלוקריה שיצמה ברורק. נונסטי קלובר בריקנה סטום, לפריקך תצטריק לרטי. סחטיר בלובך. תצטריק אלט נולום ארווס סאפיאן - פוסיליס קוויס, אקווזמן קוואזי במר מודוף.
+
+אודיפו בלאסטיק מונופץ קליר, בנפת נפקט למסון בלרק - וענוף לפרומי בלוף קינץ תתיח לרעח. לת צשחמי צש בליא, מנסוטו צמלח לביקו ננבי, צמוקו בלוקריה שיצמה ברורק. קונדימנטום קורוס בליקרה, נונסטי קלובר בריקנה סטום, לפריקך תצטריק לרטי.
+
+סחטיר בלובק. תצטריק אלט נולום ארווס סאפיאן - פוסיליס קוויס, אקווזמן קוואזי במר מודוף. קולורס מונפרד אדנדום סילקוף, מרגשי ומרגשח. עמחליף לפרומי בלוף קינץ תתיח לרעח. לת צשחמי צש בליא.
+            </Text>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
@@ -389,5 +454,48 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     lineHeight: 18,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#F9FAFB',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#111827',
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 20,
+    color: '#6B7280',
+    fontWeight: '600' as const,
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    padding: 24,
+  },
+  modalText: {
+    fontSize: 16,
+    lineHeight: 28,
+    color: '#374151',
+    textAlign: 'right',
   },
 });
