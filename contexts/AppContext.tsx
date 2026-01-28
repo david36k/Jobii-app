@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, Tender, Contact, Group, InviteStatus } from '@/types';
 import { MOCK_USERS, MOCK_TENDERS, MOCK_CONTACTS, MOCK_GROUPS } from '@/constants/mock-data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/utils/supabase';
+import { supabase } from '@/lib/supabase';
 
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
