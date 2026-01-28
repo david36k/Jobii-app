@@ -195,6 +195,16 @@ export const [AppProvider, useApp] = createContextHook(() => {
     deleteAccountMutation.mutate(userId);
   };
 
+  const logout = async () => {
+    try {
+      await AsyncStorage.removeItem('currentUserId');
+      setCurrentUserId(null);
+      queryClient.clear();
+    } catch (error) {
+      console.error('[AppContext] Logout failed:', error);
+    }
+  };
+
   return {
     currentUser: currentUserQuery.data || null,
     switchUser,
@@ -213,6 +223,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     deleteContact,
     updateContact,
     deleteAccount,
+    logout,
   };
 });
 

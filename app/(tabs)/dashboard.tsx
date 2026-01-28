@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
+import { Alert } from 'react-native';
 import { useState, useMemo, useRef } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
@@ -31,6 +32,7 @@ import {
   Coins,
   Sparkles,
   Languages,
+  LogOut,
 } from 'lucide-react-native';
 import { Tender } from '@/types';
 import { formatDate, getStatusColor, getStatusText } from '@/utils/formatting';
@@ -42,7 +44,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 type Mode = 'work' | 'hire';
 
 export default function UnifiedDashboard() {
-  const { currentUser, tenders, addCredits } = useApp();
+  const { currentUser, tenders, addCredits, logout } = useApp();
   const [mode, setMode] = useState<Mode>('work');
   const [language, setLanguage] = useState<'he' | 'en'>('he');
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -122,18 +124,46 @@ export default function UnifiedDashboard() {
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <BlurView intensity={90} tint="light" style={styles.header}>
-          <TouchableOpacity
-            style={styles.languageButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setLanguage(language === 'he' ? 'en' : 'he');
-            }}
-          >
-            <Languages size={20} color={mode === 'work' ? '#10B981' : '#4F46E5'} />
-            <Text style={[styles.languageText, { color: mode === 'work' ? '#059669' : '#4F46E5' }]}>
-              {language === 'he' ? 'EN' : 'HE'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.headerButtons}>
+            <TouchableOpacity
+              style={styles.languageButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setLanguage(language === 'he' ? 'en' : 'he');
+              }}
+            >
+              <Languages size={20} color={mode === 'work' ? '#10B981' : '#4F46E5'} />
+              <Text style={[styles.languageText, { color: mode === 'work' ? '#059669' : '#4F46E5' }]}>
+                {language === 'he' ? 'EN' : 'HE'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.logoutButton, { borderColor: mode === 'work' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(239, 68, 68, 0.3)' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                Alert.alert(
+                  'התנתק',
+                  'האם אתה בטוח שברצונך להתנתק?',
+                  [
+                    {
+                      text: 'ביטול',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'התנתק',
+                      style: 'destructive',
+                      onPress: async () => {
+                        await logout();
+                        router.replace('/' as any);
+                      },
+                    },
+                  ]
+                );
+              }}
+            >
+              <LogOut size={20} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
           <View style={styles.headerContent}>
             <TouchableOpacity 
               style={[styles.avatarPlaceholder, { shadowColor: mode === 'work' ? '#10B981' : '#4F46E5' }]}
@@ -581,10 +611,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  languageButton: {
+  headerButtons: {
     position: 'absolute',
     top: 16,
     left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    zIndex: 10,
+  },
+  languageButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -592,7 +628,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    zIndex: 10,
+  },
+  logoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 1,
   },
   languageText: {
     fontSize: 12,
