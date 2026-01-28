@@ -1,281 +1,211 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { User, Tender, Contact, Group, InviteStatus } from '@/types';
-import { MOCK_USERS, MOCK_TENDERS, MOCK_CONTACTS, MOCK_GROUPS } from '@/constants/mock-data';
+import { useState, useEffect, useMemo } from 'react';
+import { Tender, Contact, InviteStatus } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '@/lib/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabaseQueries } from '@/utils/supabase-queries';
 
 export const [AppProvider, useApp] = createContextHook(() => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [tenders, setTenders] = useState<Tender[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>(MOCK_CONTACTS);
-  const [groups] = useState<Group[]>(MOCK_GROUPS);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
-
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadCurrentUserId();
   }, []);
 
-  const loadData = async () => {
+  const loadCurrentUserId = async () => {
     try {
-      console.log('[AppContext] Loading data...');
-      
-      try {
-        const { error } = await supabase.from('users').select('count');
-        if (error) {
-          console.log('[Supabase] Connection test failed:', error.message);
-        } else {
-          console.log('[Supabase] ✅ Connected successfully!');
-        }
-      } catch (err) {
-        console.log('[Supabase] Connection test error:', err);
-      }
-      
-      const storedUsers = await AsyncStorage.getItem('users');
-      const loadedUsers = storedUsers ? JSON.parse(storedUsers) : MOCK_USERS;
-      setUsers(loadedUsers);
-
       const storedUserId = await AsyncStorage.getItem('currentUserId');
       if (storedUserId) {
-        const user = loadedUsers.find((u: User) => u.id === storedUserId);
-        if (user) {
-          console.log('[AppContext] Found user:', user.id);
-          setCurrentUser(user);
-        }
-      } else {
-        console.log('[AppContext] No stored user found');
-      }
-
-      const storedTenders = await AsyncStorage.getItem('tenders');
-      if (storedTenders) {
-        const parsedTenders = JSON.parse(storedTenders);
-        const tendersWithDates = parsedTenders.map((tender: any) => ({
-          ...tender,
-          date: new Date(tender.date),
-          createdAt: new Date(tender.createdAt),
-          invites: tender.invites.map((invite: any) => ({
-            ...invite,
-            updatedAt: new Date(invite.updatedAt),
-          })),
-        }));
-        setTenders(tendersWithDates);
-      } else {
-        setTenders(MOCK_TENDERS);
-        await AsyncStorage.setItem('tenders', JSON.stringify(MOCK_TENDERS));
+        console.log('[AppContext] Found stored user:', storedUserId);
+        setCurrentUserId(storedUserId);
       }
     } catch (error) {
-      console.error('[AppContext] Failed to load data:', error);
-      setTenders(MOCK_TENDERS);
-    } finally {
-      setIsInitialized(true);
-      console.log('[AppContext] Initialization complete');
+      console.error('[AppContext] Failed to load user:', error);
     }
   };
 
-  const switchUser = async (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
+  const currentUserQuery = useQuery({
+    queryKey: ['user', currentUserId],
+    queryFn: () => supabaseQueries.users.getById(currentUserId!),
+    enabled: !!currentUserId,
+  });
+
+  const tendersQuery = useQuery({
+    queryKey: ['tenders'],
+    queryFn: () => supabaseQueries.tenders.getAll(),
+  });
+
+  const contactsQuery = useQuery({
+    queryKey: ['contacts', currentUserId],
+    queryFn: () => supabaseQueries.contacts.getByOwner(currentUserId!),
+    enabled: !!currentUserId,
+  });
+
+  const groupsQuery = useQuery({
+    queryKey: ['groups', currentUserId],
+    queryFn: () => supabaseQueries.groups.getByOwner(currentUserId!),
+    enabled: !!currentUserId,
+  });
+
+  const switchUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
       await AsyncStorage.setItem('currentUserId', userId);
-      setCurrentUser(user);
-    }
+      return userId;
+    },
+    onSuccess: (userId) => {
+      setCurrentUserId(userId);
+      queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      queryClient.invalidateQueries({ queryKey: ['contacts', userId] });
+      queryClient.invalidateQueries({ queryKey: ['groups', userId] });
+    },
+  });
+
+  const updateCreditsMutation = useMutation({
+    mutationFn: ({ userId, amount }: { userId: string; amount: number }) => {
+      const currentUser = currentUserQuery.data;
+      if (!currentUser) throw new Error('No user found');
+      return supabaseQueries.users.updateCredits(userId, currentUser.credits + amount);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', currentUserId] });
+    },
+  });
+
+  const createTenderMutation = useMutation({
+    mutationFn: (tender: {
+      organizerId: string;
+      organizerName: string;
+      title: string;
+      description?: string;
+      location: string;
+      date: Date;
+      startTime: string;
+      endTime: string;
+      pay: number;
+      quota: number;
+      invites: { userName: string; userPhone: string; userId?: string }[];
+    }) => supabaseQueries.tenders.create(tender),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenders'] });
+    },
+  });
+
+  const updateInviteStatusMutation = useMutation({
+    mutationFn: ({ tenderId, userId, status }: { tenderId: string; userId: string; status: InviteStatus }) =>
+      supabaseQueries.invites.updateStatus(tenderId, userId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenders'] });
+    },
+  });
+
+  const addContactMutation = useMutation({
+    mutationFn: (contact: { name: string; phone: string; tag?: string; notes?: string }) => {
+      if (!currentUserId) throw new Error('No user logged in');
+      return supabaseQueries.contacts.create(currentUserId, contact);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+    },
+  });
+
+  const addMultipleContactsMutation = useMutation({
+    mutationFn: (contacts: { name: string; phone: string; tag?: string }[]) => {
+      if (!currentUserId) throw new Error('No user logged in');
+      return supabaseQueries.contacts.createMultiple(currentUserId, contacts);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+    },
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: ({ contactId, updates }: { contactId: string; updates: Partial<Contact> }) =>
+      supabaseQueries.contacts.update(contactId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+    },
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: (contactId: string) => supabaseQueries.contacts.delete(contactId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: (userId: string) => supabaseQueries.users.delete(userId),
+    onSuccess: async (_, userId) => {
+      if (currentUserId === userId) {
+        await AsyncStorage.removeItem('currentUserId');
+        setCurrentUserId(null);
+      }
+      queryClient.clear();
+    },
+  });
+
+  const switchUser = (userId: string) => {
+    switchUserMutation.mutate(userId);
   };
 
-  const deductCredit = useCallback(
-    async (userId: string) => {
-      const updatedUsers = users.map((u) =>
-        u.id === userId ? { ...u, credits: Math.max(0, u.credits - 1) } : u
-      );
-      setUsers(updatedUsers);
+  const deductCredit = (userId: string) => {
+    updateCreditsMutation.mutate({ userId, amount: -1 });
+  };
 
-      if (currentUser && currentUser.id === userId) {
-        setCurrentUser({ ...currentUser, credits: Math.max(0, currentUser.credits - 1) });
-      }
+  const addCredits = (userId: string, amount: number) => {
+    updateCreditsMutation.mutate({ userId, amount });
+  };
 
-      try {
-        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
-      } catch (error) {
-        console.error('Failed to save users:', error);
-      }
-    },
-    [users, currentUser]
-  );
+  const createTender = async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
+    if (!tender.location) {
+      throw new Error('Location is required');
+    }
+    const result = await createTenderMutation.mutateAsync(tender as any);
+    return result;
+  };
 
-  const addCredits = useCallback(
-    async (userId: string, amount: number) => {
-      const updatedUsers = users.map((u) =>
-        u.id === userId ? { ...u, credits: u.credits + amount } : u
-      );
-      setUsers(updatedUsers);
+  const updateInviteStatus = (tenderId: string, userId: string, status: InviteStatus) => {
+    updateInviteStatusMutation.mutate({ tenderId, userId, status });
+  };
 
-      if (currentUser && currentUser.id === userId) {
-        setCurrentUser({ ...currentUser, credits: currentUser.credits + amount });
-      }
+  const getTenderById = (tenderId: string) => {
+    return tendersQuery.data?.find((t) => t.id === tenderId);
+  };
 
-      try {
-        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
-      } catch (error) {
-        console.error('Failed to save users:', error);
-      }
-    },
-    [users, currentUser]
-  );
+  const addContact = async (contact: Omit<Contact, 'id'>) => {
+    const result = await addContactMutation.mutateAsync(contact);
+    return result;
+  };
 
-  const createTender = useCallback(
-    async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
-      const newTender: Tender = {
-        ...tender,
-        id: `tender-${Date.now()}`,
-        status: 'open',
-        createdAt: new Date(),
-      };
-      const updatedTenders = [newTender, ...tenders];
-      setTenders(updatedTenders);
-      try {
-        await AsyncStorage.setItem('tenders', JSON.stringify(updatedTenders));
-      } catch (error) {
-        console.error('Failed to save tender:', error);
-      }
-      return newTender;
-    },
-    [tenders]
-  );
+  const addMultipleContacts = async (contacts: { name: string; phone: string; tag?: string }[]) => {
+    const result = await addMultipleContactsMutation.mutateAsync(contacts);
+    return result;
+  };
 
-  const updateInviteStatus = useCallback(
-    async (tenderId: string, userId: string, status: InviteStatus) => {
-      const updatedTenders = tenders.map((tender) => {
-        if (tender.id !== tenderId) return tender;
+  const deleteContact = (contactId: string) => {
+    deleteContactMutation.mutate(contactId);
+  };
 
-        const updatedInvites = tender.invites.map((invite) =>
-          invite.userId === userId
-            ? { ...invite, status, updatedAt: new Date() }
-            : invite
-        );
+  const updateContact = (contactId: string, updates: Partial<Contact>) => {
+    updateContactMutation.mutate({ contactId, updates });
+  };
 
-        const acceptedCount = updatedInvites.filter((inv) => inv.status === 'accepted').length;
-        const newStatus = acceptedCount >= tender.quota ? 'full' : tender.status;
-
-        return {
-          ...tender,
-          invites: updatedInvites,
-          status: newStatus,
-        };
-      });
-
-      setTenders(updatedTenders);
-      try {
-        await AsyncStorage.setItem('tenders', JSON.stringify(updatedTenders));
-      } catch (error) {
-        console.error('Failed to save invite status:', error);
-      }
-    },
-    [tenders]
-  );
-
-  const getTenderById = useCallback(
-    (tenderId: string) => {
-      return tenders.find((t) => t.id === tenderId);
-    },
-    [tenders]
-  );
-
-  const addContact = useCallback(
-    async (contact: Omit<Contact, 'id'>) => {
-      const newContact: Contact = {
-        ...contact,
-        id: `contact-${Date.now()}`,
-      };
-      const updatedContacts = [...contacts, newContact];
-      setContacts(updatedContacts);
-      try {
-        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
-      } catch (error) {
-        console.error('Failed to save contact:', error);
-      }
-      return newContact;
-    },
-    [contacts]
-  );
-
-  const addMultipleContacts = useCallback(
-    async (newContacts: Omit<Contact, 'id'>[]) => {
-      const contactsWithIds = newContacts.map((contact, index) => ({
-        ...contact,
-        id: `contact-${Date.now()}-${index}`,
-      }));
-      const updatedContacts = [...contacts, ...contactsWithIds];
-      setContacts(updatedContacts);
-      try {
-        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
-      } catch (error) {
-        console.error('Failed to save contacts:', error);
-      }
-      return contactsWithIds;
-    },
-    [contacts]
-  );
-
-  const deleteContact = useCallback(
-    async (contactId: string) => {
-      const updatedContacts = contacts.filter((c) => c.id !== contactId);
-      setContacts(updatedContacts);
-      try {
-        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
-      } catch (error) {
-        console.error('Failed to delete contact:', error);
-      }
-    },
-    [contacts]
-  );
-
-  const updateContact = useCallback(
-    async (contactId: string, updates: Partial<Contact>) => {
-      const updatedContacts = contacts.map((c) =>
-        c.id === contactId ? { ...c, ...updates } : c
-      );
-      setContacts(updatedContacts);
-      try {
-        await AsyncStorage.setItem('contacts', JSON.stringify(updatedContacts));
-      } catch (error) {
-        console.error('Failed to update contact:', error);
-      }
-    },
-    [contacts]
-  );
-
-  const deleteAccount = useCallback(
-    async (userId: string) => {
-      try {
-        const updatedUsers = users.filter((u) => u.id !== userId);
-        setUsers(updatedUsers);
-        
-        if (currentUser && currentUser.id === userId) {
-          setCurrentUser(null);
-          await AsyncStorage.removeItem('currentUserId');
-        }
-        
-        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
-        console.log('[AppContext] Account deleted:', userId);
-      } catch (error) {
-        console.error('[AppContext] Failed to delete account:', error);
-      }
-    },
-    [users, currentUser]
-  );
+  const deleteAccount = (userId: string) => {
+    deleteAccountMutation.mutate(userId);
+  };
 
   return {
-    currentUser,
+    currentUser: currentUserQuery.data || null,
     switchUser,
-    tenders,
-    contacts,
-    groups,
+    tenders: tendersQuery.data || [],
+    contacts: contactsQuery.data || [],
+    groups: groupsQuery.data || [],
     createTender,
     updateInviteStatus,
     getTenderById,
-    mockUsers: users,
-    isInitialized,
+    mockUsers: [],
+    isInitialized: !currentUserQuery.isLoading,
     deductCredit,
     addCredits,
     addContact,

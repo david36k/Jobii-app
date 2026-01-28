@@ -1,6 +1,8 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
+import { supabaseQueries } from '@/utils/supabase-queries';
+import { useMutation } from '@tanstack/react-query';
 import {
   View,
   Text,
@@ -20,7 +22,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 
 export default function Index() {
-  const { currentUser, switchUser, mockUsers, isInitialized } = useApp();
+  const { currentUser, switchUser, isInitialized } = useApp();
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [otpCode, setOtpCode] = useState<string>('');
   const [showOtp, setShowOtp] = useState<boolean>(false);
@@ -29,6 +31,33 @@ export default function Index() {
   const [showPrivacyModal, setShowPrivacyModal] = useState<boolean>(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
+
+  const loginMutation = useMutation({
+    mutationFn: async (phone: string) => {
+      try {
+        const user = await supabaseQueries.users.getByPhone(phone);
+        return user;
+      } catch (error: any) {
+        if (error.code === 'PGRST116') {
+          const newUser = await supabaseQueries.users.create({
+            name: 'משתמש חדש',
+            phone,
+            role: 'participant',
+          });
+          return newUser;
+        }
+        throw error;
+      }
+    },
+    onSuccess: (user) => {
+      switchUser(user.id);
+      setIsLoading(false);
+    },
+    onError: (error) => {
+      console.error('[Login] Failed:', error);
+      setIsLoading(false);
+    },
+  });
 
   useEffect(() => {
     console.log('[Index] isInitialized:', isInitialized, 'currentUser:', currentUser?.id);
@@ -90,11 +119,12 @@ export default function Index() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsLoading(true);
 
+    const cleanPhone = phoneNumber.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.startsWith('0') ? `+972${cleanPhone.substring(1)}` : `+${cleanPhone}`;
+    
     setTimeout(() => {
-      const demoUser = mockUsers[0];
-      switchUser(demoUser.id);
-      setIsLoading(false);
-    }, 800);
+      loginMutation.mutate(formattedPhone);
+    }, 300);
   };
 
   return (
