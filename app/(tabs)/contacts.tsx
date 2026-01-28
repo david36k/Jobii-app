@@ -1,6 +1,7 @@
 import { useApp } from '@/contexts/AppContext';
 import { useState, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
+import * as Contacts from 'expo-contacts';
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
+import { toast } from 'sonner-native';
 import { 
   Search,
   Users,
@@ -28,12 +30,24 @@ import {
   UserPlus,
   X,
   Check,
+  Download,
+  Tag as TagIcon,
+  FileText,
+  ChevronDown,
 } from 'lucide-react-native';
 
 type NewContact = {
   name: string;
   phone: string;
   email?: string;
+  tag?: string;
+  notes?: string;
+};
+
+type DeviceContact = {
+  id: string;
+  name: string;
+  phoneNumbers?: { number?: string }[];
 };
 
 export default function ContactsScreen() {
@@ -41,7 +55,16 @@ export default function ContactsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState<'contacts' | 'groups'>('contacts');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newContacts, setNewContacts] = useState<NewContact[]>([{ name: '', phone: '', email: '' }]);
+  const [newContact, setNewContact] = useState<NewContact>({ 
+    name: '', 
+    phone: '', 
+    email: '',
+    tag: '',
+    notes: '',
+  });
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [deviceContacts, setDeviceContacts] = useState<DeviceContact[]>([]);
+  const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
 
   const filteredContacts = useMemo(() => {
     if (!searchQuery) return contacts;
@@ -49,7 +72,8 @@ export default function ContactsScreen() {
     return contacts.filter(
       (c) =>
         c.name.toLowerCase().includes(query) ||
-        c.phone.includes(query)
+        c.phone.includes(query) ||
+        (c.tag && c.tag.toLowerCase().includes(query))
     );
   }, [contacts, searchQuery]);
 
@@ -58,6 +82,117 @@ export default function ContactsScreen() {
     const query = searchQuery.toLowerCase();
     return groups.filter((g) => g.name.toLowerCase().includes(query));
   }, [groups, searchQuery]);
+
+  const handleImportFromDevice = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+
+      const { status } = await Contacts.requestPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'נדרשת הרשאה',
+          'על מנת לייבא אנשי קשר מהמכשיר, יש לאשר גישה לאנשי הקשר.',
+          [{ text: 'אישור', style: 'cancel' }]
+        );
+        return;
+      }
+
+      const { data } = await Contacts.getContactsAsync({
+        fields: [Contacts.Fields.PhoneNumbers],
+      });
+
+      if (data.length > 0) {
+        const validContacts = data.filter(
+          (contact) => contact.name && contact.phoneNumbers && contact.phoneNumbers.length > 0
+        );
+        setDeviceContacts(validContacts);
+        setShowImportModal(true);
+        setShowAddModal(false);
+      } else {
+        Alert.alert('אין אנשי קשר', 'לא נמצאו אנשי קשר במכשיר שלך');
+      }
+    } catch (error) {
+      console.error('Failed to fetch contacts:', error);
+      Alert.alert('שגיאה', 'אירעה שגיאה בטעינת אנשי הקשר מהמכשיר');
+    }
+  };
+
+  const handleImportSelected = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }
+
+      const selectedContacts = deviceContacts.filter((c) => selectedContactIds.has(c.id));
+      const contactsToAdd: Omit<import('@/types').Contact, 'id'>[] = selectedContacts.map((c) => ({
+        name: c.name,
+        phone: c.phoneNumbers?.[0]?.number || '',
+        groups: [],
+      }));
+
+      await addMultipleContacts(contactsToAdd);
+      
+      toast.success(`${selectedContacts.length} אנשי קשר יובאו בהצלחה`, {
+        duration: 3000,
+      });
+
+      setShowImportModal(false);
+      setSelectedContactIds(new Set());
+      setDeviceContacts([]);
+    } catch (error) {
+      console.error('Failed to import contacts:', error);
+      Alert.alert('שגיאה', 'אירעה שגיאה בייבוא אנשי הקשר');
+    }
+  };
+
+  const handleAddContact = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    if (!newContact.name.trim() || !newContact.phone.trim()) {
+      Alert.alert('שגיאה', 'נא למלא לפחות שם וטלפון');
+      return;
+    }
+
+    try {
+      await addContact({
+        name: newContact.name,
+        phone: newContact.phone,
+        email: newContact.email || undefined,
+        tag: newContact.tag || undefined,
+        notes: newContact.notes || undefined,
+        groups: [],
+      });
+      
+      toast.success('איש קשר נוסף בהצלחה', {
+        duration: 2000,
+      });
+
+      setShowAddModal(false);
+      setNewContact({ name: '', phone: '', email: '', tag: '', notes: '' });
+    } catch (error) {
+      console.error('Failed to add contact:', error);
+      Alert.alert('שגיאה', 'אירעה שגיאה בשמירת איש הקשר');
+    }
+  };
+
+  const toggleContactSelection = (contactId: string) => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const newSelected = new Set(selectedContactIds);
+    if (newSelected.has(contactId)) {
+      newSelected.delete(contactId);
+    } else {
+      newSelected.add(contactId);
+    }
+    setSelectedContactIds(newSelected);
+  };
 
   return (
     <View style={styles.container}>
@@ -72,7 +207,9 @@ export default function ContactsScreen() {
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
               setShowAddModal(true);
             }}
           >
@@ -107,7 +244,9 @@ export default function ContactsScreen() {
                   selectedView === 'contacts' && styles.viewButtonActive,
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
                   setSelectedView('contacts');
                 }}
               >
@@ -138,7 +277,9 @@ export default function ContactsScreen() {
                   selectedView === 'groups' && styles.viewButtonActive,
                 ]}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
                   setSelectedView('groups');
                 }}
               >
@@ -195,7 +336,9 @@ export default function ContactsScreen() {
                         pressed && styles.contactCardPressed,
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (Platform.OS !== 'web') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
                       }}
                     >
                       <View style={styles.contactAvatar}>
@@ -210,6 +353,12 @@ export default function ContactsScreen() {
                       </View>
                       <View style={styles.contactInfo}>
                         <Text style={styles.contactName}>{contact.name}</Text>
+                        {contact.tag && (
+                          <View style={styles.tagBadge}>
+                            <TagIcon size={12} color="#6366F1" />
+                            <Text style={styles.tagText}>{contact.tag}</Text>
+                          </View>
+                        )}
                         <View style={styles.contactDetailsRow}>
                           <Text style={styles.contactDetail}>{contact.phone}</Text>
                           <Phone size={14} color="#9CA3AF" />
@@ -218,6 +367,14 @@ export default function ContactsScreen() {
                           <View style={styles.contactDetailsRow}>
                             <Text style={styles.contactDetail}>{contact.email}</Text>
                             <Mail size={14} color="#9CA3AF" />
+                          </View>
+                        )}
+                        {contact.notes && (
+                          <View style={styles.contactDetailsRow}>
+                            <Text style={styles.contactNotes} numberOfLines={2}>
+                              {contact.notes}
+                            </Text>
+                            <FileText size={14} color="#9CA3AF" />
                           </View>
                         )}
                       </View>
@@ -250,7 +407,9 @@ export default function ContactsScreen() {
                         pressed && styles.contactCardPressed,
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        if (Platform.OS !== 'web') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
                       }}
                     >
                       <View style={styles.groupIcon}>
@@ -290,14 +449,16 @@ export default function ContactsScreen() {
             <BlurView intensity={90} tint="light" style={styles.modalHeader}>
               <TouchableOpacity
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
                   setShowAddModal(false);
-                  setNewContacts([{ name: '', phone: '', email: '' }]);
+                  setNewContact({ name: '', phone: '', email: '', tag: '', notes: '' });
                 }}
               >
                 <X size={24} color="#6B7280" />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>הוסף אנשי קשר</Text>
+              <Text style={styles.modalTitle}>הוסף איש קשר</Text>
             </BlurView>
 
             <KeyboardAvoidingView
@@ -309,135 +470,109 @@ export default function ContactsScreen() {
                 contentContainerStyle={styles.formScrollContent}
                 showsVerticalScrollIndicator={false}
               >
-                {newContacts.map((contact, index) => (
-                  <MotiView
-                    key={index}
-                    from={{ opacity: 0, translateY: 20 }}
-                    animate={{ opacity: 1, translateY: 0 }}
-                    transition={{ type: 'timing', duration: 300, delay: index * 50 }}
-                  >
-                    <View style={styles.contactForm}>
-                      <View style={styles.formHeader}>
-                        <TouchableOpacity
-                          onPress={() => {
-                            if (newContacts.length > 1) {
-                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                              setNewContacts(newContacts.filter((_, i) => i !== index));
-                            }
-                          }}
-                          disabled={newContacts.length === 1}
-                        >
-                          <X
-                            size={20}
-                            color={newContacts.length > 1 ? '#DC2626' : '#D1D5DB'}
-                          />
-                        </TouchableOpacity>
-                        <Text style={styles.formTitle}>איש קשר {index + 1}</Text>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>שם מלא *</Text>
-                        <View style={styles.inputContainer}>
-                          <User size={20} color="#9CA3AF" />
-                          <TextInput
-                            style={styles.input}
-                            placeholder="הכנס שם מלא"
-                            value={contact.name}
-                            onChangeText={(text) => {
-                              const updated = [...newContacts];
-                              updated[index].name = text;
-                              setNewContacts(updated);
-                            }}
-                            placeholderTextColor="#9CA3AF"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>טלפון *</Text>
-                        <View style={styles.inputContainer}>
-                          <Phone size={20} color="#9CA3AF" />
-                          <TextInput
-                            style={styles.input}
-                            placeholder="05X-XXX-XXXX"
-                            value={contact.phone}
-                            onChangeText={(text) => {
-                              const updated = [...newContacts];
-                              updated[index].phone = text;
-                              setNewContacts(updated);
-                            }}
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="phone-pad"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>אימייל (אופציונלי)</Text>
-                        <View style={styles.inputContainer}>
-                          <Mail size={20} color="#9CA3AF" />
-                          <TextInput
-                            style={styles.input}
-                            placeholder="example@email.com"
-                            value={contact.email}
-                            onChangeText={(text) => {
-                              const updated = [...newContacts];
-                              updated[index].email = text;
-                              setNewContacts(updated);
-                            }}
-                            placeholderTextColor="#9CA3AF"
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  </MotiView>
-                ))}
-
                 <TouchableOpacity
-                  style={styles.addMoreButton}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setNewContacts([...newContacts, { name: '', phone: '', email: '' }]);
-                  }}
+                  style={styles.importButton}
+                  onPress={handleImportFromDevice}
+                  activeOpacity={0.7}
                 >
-                  <Plus size={20} color="#6366F1" />
-                  <Text style={styles.addMoreText}>הוסף איש קשר נוסף</Text>
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.importButtonGradient}
+                  >
+                    <Download size={20} color="#FFFFFF" />
+                    <Text style={styles.importButtonText}>ייבא מאנשי קשר</Text>
+                  </LinearGradient>
                 </TouchableOpacity>
+
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>או הוסף ידנית</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <View style={styles.contactForm}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>שם מלא *</Text>
+                    <View style={styles.inputContainer}>
+                      <User size={20} color="#9CA3AF" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="הכנס שם מלא"
+                        value={newContact.name}
+                        onChangeText={(text) => setNewContact({ ...newContact, name: text })}
+                        placeholderTextColor="#9CA3AF"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>טלפון *</Text>
+                    <View style={styles.inputContainer}>
+                      <Phone size={20} color="#9CA3AF" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="05X-XXX-XXXX"
+                        value={newContact.phone}
+                        onChangeText={(text) => setNewContact({ ...newContact, phone: text })}
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="phone-pad"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>אימייל (אופציונלי)</Text>
+                    <View style={styles.inputContainer}>
+                      <Mail size={20} color="#9CA3AF" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="example@email.com"
+                        value={newContact.email}
+                        onChangeText={(text) => setNewContact({ ...newContact, email: text })}
+                        placeholderTextColor="#9CA3AF"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>תגית (אופציונלי)</Text>
+                    <View style={styles.inputContainer}>
+                      <TagIcon size={20} color="#9CA3AF" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder='למשל: "מלצר", "מנהל"'
+                        value={newContact.tag}
+                        onChangeText={(text) => setNewContact({ ...newContact, tag: text })}
+                        placeholderTextColor="#9CA3AF"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>הערות (אופציונלי)</Text>
+                    <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                      <FileText size={20} color="#9CA3AF" style={styles.textAreaIcon} />
+                      <TextInput
+                        style={[styles.input, styles.textArea]}
+                        placeholder="הכנס הערות..."
+                        value={newContact.notes}
+                        onChangeText={(text) => setNewContact({ ...newContact, notes: text })}
+                        placeholderTextColor="#9CA3AF"
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                      />
+                    </View>
+                  </View>
+                </View>
               </ScrollView>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={styles.saveButton}
-                  onPress={async () => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    const validContacts = newContacts.filter(
-                      (c) => c.name.trim() && c.phone.trim()
-                    );
-                    
-                    if (validContacts.length === 0) {
-                      Alert.alert('שגיאה', 'נא למלא לפחות שם וטלפון לאיש קשר אחד');
-                      return;
-                    }
-
-                    try {
-                      if (validContacts.length === 1) {
-                        await addContact({ ...validContacts[0], groups: [] });
-                      } else {
-                        await addMultipleContacts(validContacts.map(c => ({ ...c, groups: [] })));
-                      }
-                      
-                      setShowAddModal(false);
-                      setNewContacts([{ name: '', phone: '', email: '' }]);
-                      Alert.alert(
-                        'הצלחה',
-                        `${validContacts.length} אנשי קשר נוספו בהצלחה`
-                      );
-                    } catch (error) {
-                      Alert.alert('שגיאה', 'אירעה שגיאה בשמירת אנשי הקשר');
-                    }
-                  }}
+                  onPress={handleAddContact}
                   activeOpacity={0.8}
                 >
                   <LinearGradient
@@ -445,11 +580,99 @@ export default function ContactsScreen() {
                     style={styles.saveButtonGradient}
                   >
                     <Check size={24} color="#FFFFFF" />
-                    <Text style={styles.saveButtonText}>שמור אנשי קשר</Text>
+                    <Text style={styles.saveButtonText}>שמור איש קשר</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
             </KeyboardAvoidingView>
+          </SafeAreaView>
+        </Modal>
+
+        <Modal
+          visible={showImportModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowImportModal(false)}
+        >
+          <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
+            <LinearGradient
+              colors={['#EEF2FF', '#F8FAFC', '#FFFFFF']}
+              locations={[0, 0.3, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+            <BlurView intensity={90} tint="light" style={styles.modalHeader}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (Platform.OS !== 'web') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  setShowImportModal(false);
+                  setSelectedContactIds(new Set());
+                }}
+              >
+                <X size={24} color="#6B7280" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>
+                בחר אנשי קשר ({selectedContactIds.size})
+              </Text>
+            </BlurView>
+
+            <ScrollView
+              style={styles.importList}
+              contentContainerStyle={styles.importListContent}
+              showsVerticalScrollIndicator={false}
+            >
+              {deviceContacts.map((contact, index) => (
+                <MotiView
+                  key={contact.id}
+                  from={{ opacity: 0, translateX: 20 }}
+                  animate={{ opacity: 1, translateX: 0 }}
+                  transition={{ type: 'timing', duration: 300, delay: index * 30 }}
+                >
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.importContactCard,
+                      selectedContactIds.has(contact.id) && styles.importContactCardSelected,
+                      pressed && styles.contactCardPressed,
+                    ]}
+                    onPress={() => toggleContactSelection(contact.id)}
+                  >
+                    <View style={styles.checkbox}>
+                      {selectedContactIds.has(contact.id) && (
+                        <View style={styles.checkboxInner}>
+                          <Check size={16} color="#FFFFFF" strokeWidth={3} />
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.importContactInfo}>
+                      <Text style={styles.importContactName}>{contact.name}</Text>
+                      <Text style={styles.importContactPhone}>
+                        {contact.phoneNumbers?.[0]?.number || 'ללא טלפון'}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </MotiView>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.saveButton, selectedContactIds.size === 0 && styles.saveButtonDisabled]}
+                onPress={handleImportSelected}
+                activeOpacity={0.8}
+                disabled={selectedContactIds.size === 0}
+              >
+                <LinearGradient
+                  colors={selectedContactIds.size === 0 ? ['#9CA3AF', '#6B7280'] : ['#10B981', '#059669']}
+                  style={styles.saveButtonGradient}
+                >
+                  <Download size={24} color="#FFFFFF" />
+                  <Text style={styles.saveButtonText}>
+                    ייבא {selectedContactIds.size} אנשי קשר
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </SafeAreaView>
         </Modal>
       </SafeAreaView>
@@ -604,7 +827,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
     flexDirection: 'row-reverse',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 16,
   },
   contactCardPressed: {
@@ -636,13 +859,26 @@ const styles = StyleSheet.create({
   contactInfo: {
     flex: 1,
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 6,
   },
   contactName: {
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
+  },
+  tagBadge: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6366F1',
   },
   contactDetailsRow: {
     flexDirection: 'row-reverse',
@@ -652,6 +888,12 @@ const styles = StyleSheet.create({
   contactDetail: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  contactNotes: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    maxWidth: '90%',
   },
   groupCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
@@ -695,7 +937,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
   },
   groupMembers: {
     fontSize: 14,
@@ -716,7 +957,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: '#111827',
   },
   modalContent: {
@@ -729,11 +970,48 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
+  importButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  importButtonGradient: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 8,
+  },
+  importButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  divider: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  dividerText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
   contactForm: {
     backgroundColor: 'rgba(255, 255, 255, 0.7)',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 16,
     shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -742,23 +1020,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
   },
-  formHeader: {
-    flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: '#111827',
-  },
   inputGroup: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontWeight: '600',
     color: '#374151',
     marginBottom: 8,
     textAlign: 'right',
@@ -780,22 +1047,16 @@ const styles = StyleSheet.create({
     color: '#111827',
     textAlign: 'right',
   },
-  addMoreButton: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
-    borderRadius: 12,
-    paddingVertical: 16,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(99, 102, 241, 0.3)',
-    borderStyle: 'dashed',
+  textAreaContainer: {
+    alignItems: 'flex-start',
+    paddingVertical: 12,
   },
-  addMoreText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#6366F1',
+  textAreaIcon: {
+    marginTop: 2,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   modalActions: {
     position: 'absolute',
@@ -814,6 +1075,9 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
   saveButtonGradient: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -823,7 +1087,60 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 18,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: '#FFFFFF',
+  },
+  importList: {
+    flex: 1,
+  },
+  importListContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  importContactCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  importContactCardSelected: {
+    borderColor: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  importContactInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  importContactName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  importContactPhone: {
+    fontSize: 14,
+    color: '#6B7280',
   },
 });

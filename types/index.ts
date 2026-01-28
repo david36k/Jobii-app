@@ -20,6 +20,8 @@ export interface Contact {
   email?: string;
   groups: string[];
   linkedUserId?: string;
+  tag?: string;
+  notes?: string;
 }
 
 export interface Group {
