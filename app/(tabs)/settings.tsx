@@ -7,7 +7,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Settings() {
-  const { currentUser, switchUser, addCredits, deleteAccount } = useApp();
+  const { currentUser, switchUser, deleteAccount } = useApp();
 
   const handleLogout = () => {
     Alert.alert('התנתק', 'האם אתה בטוח שברצונך להתנתק?', [

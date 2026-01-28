@@ -50,7 +50,7 @@ export default function Index() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   if (!isInitialized || currentUser) {
     return (

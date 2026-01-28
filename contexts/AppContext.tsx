@@ -23,7 +23,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       console.log('[AppContext] Loading data...');
       
       try {
-        const { data, error } = await supabase.from('users').select('count');
+        const { error } = await supabase.from('users').select('count');
         if (error) {
           console.log('[Supabase] Connection test failed:', error.message);
         } else {

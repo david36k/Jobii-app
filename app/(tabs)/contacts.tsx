@@ -26,14 +26,12 @@ import {
   User,
   Phone,
   Mail,
-  Plus,
   UserPlus,
   X,
   Check,
   Download,
   Tag as TagIcon,
   FileText,
-  ChevronDown,
 } from 'lucide-react-native';
 
 type NewContact = {

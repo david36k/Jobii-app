@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions } from 'react-native';
-import { Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Animated, Dimensions, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
@@ -61,7 +60,7 @@ export default function BottomNavBar({ items }: BottomNavBarProps) {
         }),
       ]).start();
     }
-  }, [activeIndex, itemWidths]);
+  }, [activeIndex, itemWidths, items.length, screenWidth, underlinePosition, underlineWidth]);
 
   const handlePress = (route: string, index: number) => {
     if (Platform.OS !== 'web') {
