@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, Tender, Contact, Group, InviteStatus } from '@/types';
 import { MOCK_USERS, MOCK_TENDERS, MOCK_CONTACTS, MOCK_GROUPS } from '@/constants/mock-data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/utils/supabase';
 
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -20,6 +21,17 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const loadData = async () => {
     try {
       console.log('[AppContext] Loading data...');
+      
+      try {
+        const { data, error } = await supabase.from('users').select('count');
+        if (error) {
+          console.log('[Supabase] Connection test failed:', error.message);
+        } else {
+          console.log('[Supabase] ✅ Connected successfully!');
+        }
+      } catch (err) {
+        console.log('[Supabase] Connection test error:', err);
+      }
       
       const storedUsers = await AsyncStorage.getItem('users');
       const loadedUsers = storedUsers ? JSON.parse(storedUsers) : MOCK_USERS;
