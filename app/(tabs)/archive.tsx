@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   Pressable,
   LayoutAnimation,
   UIManager,
@@ -24,13 +23,11 @@ import {
   CheckCircle2,
   XCircle,
   Briefcase,
-  Filter,
   TrendingUp,
   Package,
 } from 'lucide-react-native';
 import { useApp } from '@/contexts/AppContext';
 import { formatDate } from '@/utils/formatting';
-import { Tender } from '@/types';
 import { router } from 'expo-router';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -129,7 +126,7 @@ export default function ArchiveScreen() {
                     <Package size={24} color="#7C3AED" />
                   </View>
                   <Text style={styles.statValue}>{stats.totalCompleted}</Text>
-                  <Text style={styles.statLabel}>סה"כ הושלמו</Text>
+                  <Text style={styles.statLabel}>סה״כ הושלמו</Text>
                 </BlurView>
               </MotiView>
 
@@ -181,7 +178,7 @@ export default function ArchiveScreen() {
                     <TrendingUp size={24} color="#FFFFFF" />
                   </View>
                   <Text style={styles.statValueWhite}>₪{stats.totalEarned.toLocaleString()}</Text>
-                  <Text style={styles.statLabelWhite}>סה"כ הרווחתי</Text>
+                  <Text style={styles.statLabelWhite}>סה״כ הרווחתי</Text>
                 </LinearGradient>
               </MotiView>
             </View>
