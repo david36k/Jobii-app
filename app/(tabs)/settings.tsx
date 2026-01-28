@@ -144,6 +144,11 @@ export default function Settings() {
           </View>
         </View>
 
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <LogOut size={24} color="#DC2626" />
+          <Text style={styles.logoutButtonText}>התנתק</Text>
+        </TouchableOpacity>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>אודות</Text>
           <View style={styles.aboutCard}>
@@ -154,11 +159,6 @@ export default function Settings() {
             <Text style={styles.version}>גרסה 1.0.0</Text>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <LogOut size={24} color="#DC2626" />
-          <Text style={styles.logoutButtonText}>התנתק</Text>
-        </TouchableOpacity>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>אזור מסוכן</Text>
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: 24,
@@ -415,6 +415,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#DC2626',
     marginTop: 12,
+    marginBottom: 24,
   },
   logoutButtonText: {
     fontSize: 16,
