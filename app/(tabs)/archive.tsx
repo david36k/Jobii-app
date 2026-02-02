@@ -29,6 +29,7 @@ import {
 import { useApp } from '@/contexts/AppContext';
 import { formatDate } from '@/utils/formatting';
 import { router } from 'expo-router';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -38,6 +39,7 @@ type FilterMode = 'all' | 'organized' | 'worked';
 
 export default function ArchiveScreen() {
   const { currentUser, tenders } = useApp();
+  const { t } = useLanguage();
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
 
   const completedTenders = useMemo(() => {
@@ -104,7 +106,7 @@ export default function ArchiveScreen() {
         <BlurView intensity={90} tint="light" style={styles.header}>
           <View style={styles.headerContent}>
             <Archive size={32} color="#7C3AED" />
-            <Text style={styles.headerTitle}>ארכיון</Text>
+            <Text style={styles.headerTitle}>{t('archive.title')}</Text>
           </View>
         </BlurView>
 
@@ -126,7 +128,7 @@ export default function ArchiveScreen() {
                     <Package size={24} color="#7C3AED" />
                   </View>
                   <Text style={styles.statValue}>{stats.totalCompleted}</Text>
-                  <Text style={styles.statLabel}>סה״כ הושלמו</Text>
+                  <Text style={styles.statLabel}>{t('archive.totalCompleted')}</Text>
                 </BlurView>
               </MotiView>
 
@@ -141,7 +143,7 @@ export default function ArchiveScreen() {
                     <Users size={24} color="#3B82F6" />
                   </View>
                   <Text style={styles.statValue}>{stats.organized}</Text>
-                  <Text style={styles.statLabel}>ארגנתי</Text>
+                  <Text style={styles.statLabel}>{t('archive.organized')}</Text>
                 </BlurView>
               </MotiView>
             </View>
@@ -158,7 +160,7 @@ export default function ArchiveScreen() {
                     <Briefcase size={24} color="#10B981" />
                   </View>
                   <Text style={styles.statValue}>{stats.worked}</Text>
-                  <Text style={styles.statLabel}>עבדתי</Text>
+                  <Text style={styles.statLabel}>{t('archive.worked')}</Text>
                 </BlurView>
               </MotiView>
 
@@ -178,7 +180,7 @@ export default function ArchiveScreen() {
                     <TrendingUp size={24} color="#FFFFFF" />
                   </View>
                   <Text style={styles.statValueWhite}>₪{stats.totalEarned.toLocaleString()}</Text>
-                  <Text style={styles.statLabelWhite}>סה״כ הרווחתי</Text>
+                  <Text style={styles.statLabelWhite}>{t('archive.totalEarned')}</Text>
                 </LinearGradient>
               </MotiView>
             </View>
@@ -204,7 +206,7 @@ export default function ArchiveScreen() {
                   filterMode === 'all' && styles.filterButtonTextActive,
                 ]}
               >
-                הכל ({stats.totalCompleted})
+                {t('archive.filterAll')} ({stats.totalCompleted})
               </Text>
             </Pressable>
 
@@ -227,7 +229,7 @@ export default function ArchiveScreen() {
                   filterMode === 'organized' && styles.filterButtonTextActive,
                 ]}
               >
-                ארגנתי ({stats.organized})
+                {t('archive.filterOrganized')} ({stats.organized})
               </Text>
             </Pressable>
 
@@ -250,7 +252,7 @@ export default function ArchiveScreen() {
                   filterMode === 'worked' && styles.filterButtonTextActive,
                 ]}
               >
-                עבדתי ({stats.worked})
+                {t('archive.filterWorked')} ({stats.worked})
               </Text>
             </Pressable>
           </BlurView>
@@ -270,19 +272,19 @@ export default function ArchiveScreen() {
                   <Archive size={64} color="#A78BFA" />
                 </LinearGradient>
               </View>
-              <Text style={styles.emptyTitle}>אין פריטים בארכיון</Text>
+              <Text style={styles.emptyTitle}>{t('archive.noItems')}</Text>
               <Text style={styles.emptySubtitle}>
                 {filterMode === 'all'
-                  ? 'מכרזים והזמנות שהסתיימו יופיעו כאן'
+                  ? t('archive.noItemsDesc')
                   : filterMode === 'organized'
-                  ? 'מכרזים שארגנת והסתיימו יופיעו כאן'
-                  : 'משמרות שעבדת יופיעו כאן'}
+                  ? t('archive.noItemsOrganizedDesc')
+                  : t('archive.noItemsWorkedDesc')}
               </Text>
             </MotiView>
           ) : (
             <View style={styles.tendersSection}>
               <Text style={styles.sectionTitle}>
-                {filteredTenders.length} {filteredTenders.length === 1 ? 'מכרז' : 'מכרזים'}
+                {filteredTenders.length} {filteredTenders.length === 1 ? t('archive.tender') : t('archive.tenders')}
               </Text>
 
               {filteredTenders.map((tender, index) => {
@@ -322,7 +324,7 @@ export default function ArchiveScreen() {
                             >
                               <Users size={14} color="#3B82F6" />
                               <Text style={[styles.roleBadgeText, { color: '#3B82F6' }]}>
-                                ארגנתי
+                                {t('archive.organizedBadge')}
                               </Text>
                             </View>
                           ) : (
@@ -341,14 +343,14 @@ export default function ArchiveScreen() {
                                 <>
                                   <CheckCircle2 size={14} color="#10B981" />
                                   <Text style={[styles.roleBadgeText, { color: '#10B981' }]}>
-                                    השתתפתי
+                                    {t('archive.participatedBadge')}
                                   </Text>
                                 </>
                               ) : (
                                 <>
                                   <XCircle size={14} color="#EF4444" />
                                   <Text style={[styles.roleBadgeText, { color: '#EF4444' }]}>
-                                    דחיתי
+                                    {t('archive.rejectedBadge')}
                                   </Text>
                                 </>
                               )}
@@ -375,7 +377,7 @@ export default function ArchiveScreen() {
                           <View style={styles.detailRow}>
                             <Text style={styles.detailTextBold}>
                               {tender.invites.filter((inv) => inv.status === 'accepted').length} /{' '}
-                              {tender.quota} עובדים
+                              {tender.quota} {t('dashboard.workers')}
                             </Text>
                             <Users size={16} color="#7C3AED" />
                           </View>
@@ -456,15 +458,16 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   statsContainer: {
-    gap: 12,
     marginBottom: 20,
   },
   statsRow: {
     flexDirection: 'row-reverse',
     gap: 12,
+    marginBottom: 12,
   },
   statCard: {
     flex: 1,
+    minHeight: 120,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#7C3AED',
@@ -474,12 +477,16 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   statCardBlur: {
+    flex: 1,
     padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   statCardGradient: {
+    flex: 1,
     padding: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   statIcon: {
     width: 48,

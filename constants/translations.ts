@@ -243,7 +243,7 @@ export const translations: Record<Language, TranslationKeys> = {
       members: 'אנשי קשר',
     },
     archive: {
-      title: 'ארכיון',
+      title: 'מידע',
       totalCompleted: 'סה״כ הושלמו',
       organized: 'ארגנתי',
       worked: 'עבדתי',
@@ -383,7 +383,7 @@ export const translations: Record<Language, TranslationKeys> = {
       members: 'members',
     },
     archive: {
-      title: 'Archive',
+      title: 'Info',
       totalCompleted: 'Total Completed',
       organized: 'Organized',
       worked: 'Worked',
