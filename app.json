@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "app.rork.skillswap-app-3afg55e"
+      "bundleIdentifier": "com.jobii.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.skillswap_app_3afg55e",
+      "package": "com.jobii.app",
       "permissions": [
         "android.permission.VIBRATE"
       ]
