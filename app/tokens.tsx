@@ -11,6 +11,7 @@ interface TokenPackage {
   id: string;
   name: string;
   price: string;
+  originalPrice: string;
   tokens: number;
   costPerJob: string;
   badge?: string;
@@ -23,6 +24,7 @@ const TOKEN_PACKAGES: TokenPackage[] = [
     id: 'starter',
     name: 'חבילת התחלה',
     price: '₪9.99',
+    originalPrice: '₪14.99',
     tokens: 10,
     costPerJob: '~₪2.00',
     gradient: ['#8B5CF6', '#6D28D9'] as [string, string],
@@ -31,6 +33,7 @@ const TOKEN_PACKAGES: TokenPackage[] = [
     id: 'popular',
     name: 'חבילה פופולרית',
     price: '₪24.99',
+    originalPrice: '₪37.49',
     tokens: 30,
     costPerJob: '~₪1.66',
     badge: 'הכי משתלם',
@@ -41,6 +44,7 @@ const TOKEN_PACKAGES: TokenPackage[] = [
     id: 'business',
     name: 'חבילת עסקים',
     price: '₪69.90',
+    originalPrice: '₪104.85',
     tokens: 100,
     costPerJob: '~₪1.40',
     badge: 'עסקים',
@@ -170,7 +174,13 @@ export default function TokensScreen() {
               <View style={styles.packageHeader}>
                 <View style={styles.packageTitleContainer}>
                   <Text style={styles.packageName}>{pkg.name}</Text>
-                  <Text style={styles.packagePrice}>{pkg.price}</Text>
+                  <View style={styles.priceContainer}>
+                    <Text style={styles.originalPrice}>{pkg.originalPrice}</Text>
+                    <Text style={styles.packagePrice}>{pkg.price}</Text>
+                  </View>
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountBadgeText}>הנחה 33%</Text>
+                  </View>
                 </View>
                 <View style={styles.packageIconContainer}>
                   <Coins size={32} color="#FFFFFF" />
@@ -422,11 +432,35 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700' as const,
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 8,
+  },
+  priceContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  originalPrice: {
+    fontSize: 20,
+    fontWeight: '600' as const,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textDecorationLine: 'line-through',
   },
   packagePrice: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '800' as const,
+    color: '#FFFFFF',
+  },
+  discountBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-end',
+  },
+  discountBadgeText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
     color: '#FFFFFF',
   },
   packageIconContainer: {
