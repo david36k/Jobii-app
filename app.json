@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Jobii App",
-    "slug": "jobii-app",
+    "name": "Jobii - מכרזי עובדים",
+    "slug": "jobii",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
