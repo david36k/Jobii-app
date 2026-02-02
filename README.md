@@ -18,6 +18,33 @@ Copy `.env.example` to `.env` and fill in the values. The Supabase client is ini
 
 See [AUDIT_REPORT.md](AUDIT_REPORT.md) for architecture and audit findings.
 
+### Expo / EAS Build
+
+The project is set up for [EAS Build](https://docs.expo.dev/build/introduction/) (Expo Application Services).
+
+**Install dependencies** (use one of these):
+
+- With Bun: `bun install`
+- With npm: `npm install --legacy-peer-deps` (required due to React 19 peer deps)
+
+**First-time EAS setup:**
+
+1. Create an Expo account at [expo.dev/signup](https://expo.dev/signup) if needed.
+2. Log in: `npx eas login`
+3. Configure the project (optional; `eas.json` is already present): `npm run build:configure`
+
+**Build commands:**
+
+- `npm run build:ios` – build for iOS (EAS cloud)
+- `npm run build:android` – build for Android (EAS cloud)
+- `npm run build:all` – build for both platforms
+
+Build profiles in `eas.json`:
+
+- **development** – dev client + simulator (iOS) / internal APK (Android)
+- **preview** – internal distribution, APK for Android
+- **production** – store builds (App Store / Play Store)
+
 ---
 
 ## Project info (Rork)

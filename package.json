@@ -6,7 +6,11 @@
     "start": "bunx rork start -p c3t7820h3hv1ixptgmkkn --tunnel",
     "start-web": "bunx rork start -p c3t7820h3hv1ixptgmkkn --web --tunnel",
     "start-web-dev": "DEBUG=expo* bunx rork start -p c3t7820h3hv1ixptgmkkn --web --tunnel",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:ios": "npx eas build --platform ios --non-interactive",
+    "build:android": "npx eas build --platform android --non-interactive",
+    "build:all": "npx eas build --platform all --non-interactive",
+    "build:configure": "npx eas build:configure"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -35,6 +39,7 @@
     "expo-symbols": "~1.0.7",
     "expo-system-ui": "~6.0.8",
     "expo-web-browser": "~15.0.9",
+    "expo-dev-client": "~6.0.20",
     "lucide-react-native": "^0.475.0",
     "moti": "^0.30.0",
     "react": "19.1.0",
@@ -58,6 +63,9 @@
     "eslint": "^9.31.0",
     "eslint-config-expo": "~10.0.0",
     "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "expo-location": "~19.0.7"
   },
   "private": true
 }

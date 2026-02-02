@@ -34,11 +34,12 @@
       [
         "expo-router",
         {
-          "origin": "https://jobii.com/"
+          "origin": "https://jobii.co.il/"
         }
       ],
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-dev-client"
     ],
     "experiments": {
       "typedRoutes": true
