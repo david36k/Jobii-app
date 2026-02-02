@@ -40,7 +40,7 @@ export default function CreateTender() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const hasNoCredits = currentUser && currentUser.credits === 0;
+  const hasNoCredits = currentUser && currentUser.credits < 2;
 
   const handleCreate = () => {
     if (hasNoCredits) {
@@ -124,6 +124,7 @@ export default function CreateTender() {
       });
 
       if (currentUser) {
+        deductCredit(currentUser.id);
         deductCredit(currentUser.id);
       }
 

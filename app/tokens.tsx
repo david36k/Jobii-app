@@ -58,21 +58,11 @@ export default function TokensScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert(
       'רכישת טוקנים',
-      `האם אתה בטוח שברצונך לרכוש ${pkg.tokens} טוקנים ב-${pkg.price}?`,
+      `זוהי גרסת הדגמה. במצב רגיל כאן תתבצע רכישה אמיתית של ${pkg.tokens} טוקנים ב-${pkg.price}`,
       [
         {
-          text: 'ביטול',
+          text: 'הבנתי',
           style: 'cancel',
-        },
-        {
-          text: 'רכוש',
-          onPress: () => {
-            if (currentUser) {
-              addCredits(currentUser.id, pkg.tokens);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              Alert.alert('הצלחה!', `נוספו ${pkg.tokens} טוקנים לחשבונך`);
-            }
-          },
         },
       ]
     );
@@ -85,15 +75,7 @@ export default function TokensScreen() {
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    setTimeout(() => {
-      if (currentUser) {
-        addCredits(currentUser.id, 1);
-        setWatchedAdsToday(prev => prev + 1);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert('מעולה!', 'קיבלת טוקן אחד 🎉');
-      }
-    }, 1500);
+    Alert.alert('צפייה בפרסומת', 'זוהי גרסת הדגמה. במצב רגיל כאן תוצג פרסומת ותקבל טוקן אחד');
   };
 
   return (
