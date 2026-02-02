@@ -123,11 +123,9 @@ export const [AppProvider, useApp] = createContextHook(() => {
     },
   });
 
-  const updateCreditsMutation = useMutation({
+  const addCreditsMutation = useMutation({
     mutationFn: ({ userId, amount }: { userId: string; amount: number }) => {
-      const currentUser = currentUserQuery.data;
-      if (!currentUser) throw new Error('No user found');
-      return supabaseQueries.users.updateCredits(userId, currentUser.credits + amount);
+      return supabaseQueries.users.addCredits(userId, amount);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', currentUserId] });
@@ -211,12 +209,8 @@ export const [AppProvider, useApp] = createContextHook(() => {
     switchUserMutation.mutate(userId);
   };
 
-  const deductCredit = (userId: string) => {
-    updateCreditsMutation.mutate({ userId, amount: -1 });
-  };
-
   const addCredits = (userId: string, amount: number) => {
-    updateCreditsMutation.mutate({ userId, amount });
+    addCreditsMutation.mutate({ userId, amount });
   };
 
   const createTender = async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
@@ -278,7 +272,6 @@ export const [AppProvider, useApp] = createContextHook(() => {
     getTenderById,
     mockUsers: [],
     isInitialized: !currentUserQuery.isLoading,
-    deductCredit,
     addCredits,
     addContact,
     addMultipleContacts,

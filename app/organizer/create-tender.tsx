@@ -23,7 +23,7 @@ import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
 
 export default function CreateTender() {
-  const { currentUser, createTender, contacts, groups, deductCredit } = useApp();
+  const { currentUser, createTender, contacts, groups } = useApp();
 
   const [title, setTitle] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
@@ -108,33 +108,40 @@ export default function CreateTender() {
       })
       .filter((invite): invite is NonNullable<typeof invite> => invite !== null);
 
-    setTimeout(() => {
-      createTender({
-        organizerId: currentUser!.id,
-        organizerName: currentUser!.name,
-        title: title.trim(),
-        date,
-        startTime,
-        endTime,
-        pay: parseInt(pay),
-        quota: parseInt(quota),
-        invites,
-        description: description.trim() || undefined,
-        location: location.trim() || undefined,
-      });
+    setTimeout(async () => {
+      try {
+        await createTender({
+          organizerId: currentUser!.id,
+          organizerName: currentUser!.name,
+          title: title.trim(),
+          date,
+          startTime,
+          endTime,
+          pay: parseInt(pay),
+          quota: parseInt(quota),
+          invites,
+          description: description.trim() || undefined,
+          location: location.trim() || undefined,
+        });
 
-      if (currentUser) {
-        deductCredit(currentUser.id);
-        deductCredit(currentUser.id);
+        setIsCreating(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        toast.success('המכרז נוצר בהצלחה!');
+        
+        setTimeout(() => {
+          router.back();
+        }, 500);
+      } catch (error: any) {
+        setIsCreating(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        
+        if (error.message && error.message.includes('Not enough credits')) {
+          toast.error('אין מספיק קרדיטים');
+        } else {
+          toast.error('שגיאה ביצירת המכרז');
+        }
+        console.error('[Create Tender Error]', error);
       }
-
-      setIsCreating(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      toast.success('המכרז נוצר בהצלחה!');
-      
-      setTimeout(() => {
-        router.back();
-      }, 500);
     }, 300);
   };
 

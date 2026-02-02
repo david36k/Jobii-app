@@ -41,16 +41,31 @@ export const supabaseQueries = {
       return mapUserFromDB(data);
     },
     
-    updateCredits: async (userId: string, credits: number) => {
-      const { data, error } = await supabase
-        .from('users')
-        .update({ credits })
-        .eq('id', userId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return mapUserFromDB(data);
+    addCredits: async (userId: string, amount: number) => {
+      const { error } = await supabase.rpc('add_credits_to_user', {
+        p_user_id: userId,
+        p_amount: amount,
+      });
+
+      if (error) {
+        console.error('[Add Credits Error]', error);
+        throw new Error(error.message || 'Failed to add credits');
+      }
+
+      return supabaseQueries.users.getById(userId);
+    },
+
+    getCredits: async (userId: string) => {
+      const { data, error } = await supabase.rpc('get_user_credits', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.error('[Get Credits Error]', error);
+        return 0;
+      }
+
+      return data || 0;
     },
     
     delete: async (userId: string) => {
@@ -121,44 +136,49 @@ export const supabaseQueries = {
       quota: number;
       invites: { userName: string; userPhone: string; userId?: string }[];
     }) => {
-      const { data: tenderData, error: tenderError } = await supabase
-        .from('tenders')
-        .insert({
-          organizer_id: tender.organizerId,
-          title: tender.title,
-          description: tender.description,
-          location: tender.location,
-          date: tender.date.toISOString().split('T')[0],
-          start_time: tender.startTime,
-          end_time: tender.endTime,
-          pay: tender.pay,
-          quota: tender.quota,
-        })
-        .select(`
-          *,
-          users!tenders_organizer_id_fkey(name, phone)
-        `)
-        .single();
-      
-      if (tenderError) throw tenderError;
-      
+      const { data: tenderId, error: tenderError } = await supabase.rpc(
+        'create_tender_with_payment',
+        {
+          p_organizer_id: tender.organizerId,
+          p_title: tender.title,
+          p_description: tender.description || '',
+          p_location: tender.location,
+          p_date: tender.date.toISOString().split('T')[0],
+          p_start_time: tender.startTime,
+          p_end_time: tender.endTime,
+          p_pay: tender.pay,
+          p_quota: tender.quota,
+        }
+      );
+
+      if (tenderError) {
+        console.error('[Tender Creation Error]', tenderError);
+        throw new Error(tenderError.message || 'Failed to create tender');
+      }
+
+      if (!tenderId) {
+        throw new Error('No tender ID returned');
+      }
+
       if (tender.invites.length > 0) {
         const { error: invitesError } = await supabase
           .from('invites')
           .insert(
             tender.invites.map((invite) => ({
-              tender_id: tenderData.id,
+              tender_id: tenderId,
               user_id: invite.userId || null,
               user_name: invite.userName,
               user_phone: invite.userPhone,
               is_guest: !invite.userId,
             }))
           );
-        
-        if (invitesError) throw invitesError;
+
+        if (invitesError) {
+          console.error('[Invites Creation Error]', invitesError);
+        }
       }
-      
-      return supabaseQueries.tenders.getById(tenderData.id);
+
+      return supabaseQueries.tenders.getById(tenderId);
     },
   },
   
