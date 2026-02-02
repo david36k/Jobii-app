@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
     }),
   },
   blur: {
-    paddingVertical: 16,
-    paddingTop: 12,
+    paddingVertical: Platform.OS === 'android' ? 12 : 16,
+    paddingTop: Platform.OS === 'android' ? 8 : 12,
     borderWidth: 1.5,
     borderColor: 'rgba(99, 102, 241, 0.15)',
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: Platform.OS === 'android' ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)',
     overflow: 'hidden',
   },
   innerContainer: {
@@ -209,22 +209,22 @@ const styles = StyleSheet.create({
   item: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: Platform.OS === 'android' ? 4 : 8,
     paddingHorizontal: 8,
     position: 'relative',
     minWidth: 60,
   },
   iconContainer: {
-    marginBottom: 6,
+    marginBottom: Platform.OS === 'android' ? 4 : 6,
   },
   label: {
-    fontSize: 11,
+    fontSize: Platform.OS === 'android' ? 10 : 11,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   underline: {
     position: 'absolute',
-    top: 8,
+    top: Platform.OS === 'android' ? 4 : 8,
     height: 3,
     backgroundColor: '#6366F1',
     borderRadius: 3,
