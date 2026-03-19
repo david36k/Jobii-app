@@ -10,7 +10,7 @@
 
 **Jobii** is a React Native Expo (SDK 54) app using **TypeScript**, **Expo Router**, **Supabase**, and **TanStack Query**. It implements a **two-sided marketplace** for shift/tender management: “Work” (participant) and “Hire” (organizer). The codebase is generally coherent: file-based routing is used correctly, context + React Query centralize state, and a glassmorphism-style UI is applied across screens.
 
-**Health:** **Good** with clear improvement areas. Main gaps: **rebrand leftovers** (Mihrazone in translations), **logout flow** (using `switchUser('')` instead of `logout()`), **dead/duplicate code** (e.g. `utils/supabase.ts`), **inconsistent use of design tokens** (many hardcoded colors), and **unused components** (`EmptyState`, `ModernMobileMenu`). No critical security or data-corruption issues were found; auth is phone-based lookup/creation (no real OTP verification in the flow audited).
+**Health:** **Good** — P0/P1/P2 remediation items below are implemented (logout, single Supabase client, rebrand, tokens, dashboard structure, profile persistence, single-step login, typed tender creation, dependency cleanup). Residual notes: third-party typings are shimmed in `types/` where needed; `ModernMobileMenu` may still be unused depending on navigation.
 
 ### Remediation status (post-implementation)
 
@@ -24,7 +24,7 @@
 | 3.6 Package name / scripts | **Done** – `name`: `jobii-app`; scripts unchanged (Rork CLI); README updated |
 | Section 4 Rebrand | **Done** – Translations + app.json scheme/origin → Jobii |
 | Section 5.1 Colors | **Done** – `constants/colors.ts` extended; screens refactored |
-| Section 5.2 Dashboard hooks | **Done** – `useDashboardMode`, `useWorkViewData`, `useHireViewData` |
+| Section 5.2 Dashboard hooks / views | **Done** – `useDashboardMode`, `useWorkViewData`, `useHireViewData`; `WorkView` / `HireView` in `components/dashboard/` |
 | Section 5.3 EmptyState | **Done** – Used in dashboard, contacts, archive |
 | Section 5.4 Typed routes | **Done** – `as any` removed from router calls |
 | Section 5.5 Profile save | **Done** – `users.update` + `updateProfile` + profile/edit |

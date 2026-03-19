@@ -15,8 +15,23 @@ type TranslationKeys = {
     yes: string;
     no: string;
   };
+  login: {
+    title: string;
+    subtitle: string;
+    phoneLabel: string;
+    phonePlaceholder: string;
+    connect: string;
+    connecting: string;
+    terms: string;
+    privacy: string;
+    loading: string;
+    footerDisclaimer: string;
+    termsModalTitle: string;
+    privacyModalTitle: string;
+  };
   dashboard: {
     greeting: string;
+    userFallback: string;
     credits: string;
     modeWork: string;
     modeHire: string;
@@ -157,8 +172,23 @@ export const translations: Record<Language, TranslationKeys> = {
       yes: 'כן',
       no: 'לא',
     },
+    login: {
+      title: 'Jobii',
+      subtitle: 'התחבר עם מספר הטלפון שלך',
+      phoneLabel: 'מספר טלפון',
+      phonePlaceholder: '050-123-4567',
+      connect: 'התחבר',
+      connecting: 'מתחבר...',
+      terms: 'תנאי שימוש',
+      privacy: 'מדיניות פרטיות',
+      loading: 'טוען...',
+      footerDisclaimer: 'בהמשך השימוש באפליקציה, אתה מסכים לתנאים שלנו',
+      termsModalTitle: 'תנאי שימוש',
+      privacyModalTitle: 'מדיניות פרטיות',
+    },
     dashboard: {
       greeting: 'שלום',
+      userFallback: 'משתמש',
       credits: 'קרדיטים',
       modeWork: 'מחפש עבודה',
       modeHire: 'מגייס עובדים',
@@ -297,8 +327,23 @@ export const translations: Record<Language, TranslationKeys> = {
       yes: 'Yes',
       no: 'No',
     },
+    login: {
+      title: 'Jobii',
+      subtitle: 'Sign in with your phone number',
+      phoneLabel: 'Phone number',
+      phonePlaceholder: '050-123-4567',
+      connect: 'Continue',
+      connecting: 'Signing in...',
+      terms: 'Terms of use',
+      privacy: 'Privacy policy',
+      loading: 'Loading...',
+      footerDisclaimer: 'By continuing, you agree to our terms',
+      termsModalTitle: 'Terms of use',
+      privacyModalTitle: 'Privacy policy',
+    },
     dashboard: {
       greeting: 'Hello',
+      userFallback: 'User',
       credits: 'Credits',
       modeWork: 'Looking for Work',
       modeHire: 'Hiring Employees',

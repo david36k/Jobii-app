@@ -30,23 +30,27 @@ export const [AppProvider, useApp] = createContextHook(() => {
     queryKey: ['user', currentUserId],
     queryFn: () => supabaseQueries.users.getById(currentUserId!),
     enabled: !!currentUserId,
+    staleTime: 1000 * 60 * 5, // 5 minutes — user profile changes infrequently
   });
 
   const tendersQuery = useQuery({
     queryKey: ['tenders'],
     queryFn: () => supabaseQueries.tenders.getAll(),
+    staleTime: 1000 * 60 * 2, // 2 minutes — supplemented by realtime invalidation
   });
 
   const contactsQuery = useQuery({
     queryKey: ['contacts', currentUserId],
     queryFn: () => supabaseQueries.contacts.getByOwner(currentUserId!),
     enabled: !!currentUserId,
+    staleTime: 1000 * 60 * 5, // 5 minutes — contacts rarely change mid-session
   });
 
   const groupsQuery = useQuery({
     queryKey: ['groups', currentUserId],
     queryFn: () => supabaseQueries.groups.getByOwner(currentUserId!),
     enabled: !!currentUserId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   useEffect(() => {
@@ -165,19 +169,26 @@ export const [AppProvider, useApp] = createContextHook(() => {
   });
 
   const createTenderMutation = useMutation({
-    mutationFn: (tender: {
-      organizerId: string;
-      organizerName: string;
-      title: string;
-      description?: string;
-      location: string;
-      date: Date;
-      startTime: string;
-      endTime: string;
-      pay: number;
-      quota: number;
-      invites: { userName: string; userPhone: string; userId?: string }[];
-    }) => supabaseQueries.tenders.create(tender),
+    mutationFn: (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
+      const { organizerName: _organizerName, invites, ...rest } = tender;
+      if (!rest.location) throw new Error('Location is required');
+      return supabaseQueries.tenders.create({
+        organizerId: rest.organizerId,
+        title: rest.title,
+        description: rest.description,
+        location: rest.location,
+        date: rest.date,
+        startTime: rest.startTime,
+        endTime: rest.endTime,
+        pay: rest.pay,
+        quota: rest.quota,
+        invites: invites.map((i) => ({
+          userName: i.userName,
+          userPhone: i.userPhone,
+          userId: i.userId,
+        })),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenders'] });
     },
@@ -253,8 +264,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     if (!tender.location) {
       throw new Error('Location is required');
     }
-    const result = await createTenderMutation.mutateAsync(tender as any);
-    return result;
+    return createTenderMutation.mutateAsync(tender);
   };
 
   const updateInviteStatus = (tenderId: string, userId: string, status: InviteStatus) => {

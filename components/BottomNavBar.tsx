@@ -139,8 +139,8 @@ export default function BottomNavBar({ items }: BottomNavBarProps) {
                     onLayout={(e) => handleTextLayout(e, index)}
                     style={[
                       styles.label,
-                      { 
-                        color: active ? '#6366F1' : '#64748B',
+                      {
+                        color: active ? colors.primaryLight : colors.textMuted,
                         fontWeight: active ? '700' : '500',
                         opacity: active ? 1 : 0.7,
                       },

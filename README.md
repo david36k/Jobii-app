@@ -16,7 +16,7 @@ Copy `.env.example` to `.env` and fill in the values. The Supabase client is ini
 - `bun run start` – start dev server (uses Rork CLI; press `i` for iOS Simulator or scan QR for device)
 - `bun run start-web` – web preview
 
-See [AUDIT_REPORT.md](AUDIT_REPORT.md) for architecture and audit findings.
+See [AUDIT_REPORT.md](AUDIT_REPORT.md) for architecture and audit findings. Unused packages (`zustand`, `@rork-ai/toolkit-sdk`) were removed; the app does not depend on them.
 
 ### Expo / EAS Build
 

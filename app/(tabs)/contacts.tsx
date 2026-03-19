@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { colors } from '@/constants/colors';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useState, useMemo } from 'react';
 import * as Haptics from 'expo-haptics';
 import * as Contacts from 'expo-contacts';
@@ -52,6 +53,7 @@ type DeviceContact = {
 
 export default function ContactsScreen() {
   const { contacts, groups, addContact, addMultipleContacts } = useApp();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState<'contacts' | 'groups'>('contacts');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -93,9 +95,9 @@ export default function ContactsScreen() {
       
       if (status !== 'granted') {
         Alert.alert(
-          'נדרשת הרשאה',
-          'על מנת לייבא אנשי קשר מהמכשיר, יש לאשר גישה לאנשי הקשר.',
-          [{ text: 'אישור', style: 'cancel' }]
+          t('contacts.permissionRequired'),
+          t('contacts.permissionMessage'),
+          [{ text: t('common.confirm'), style: 'cancel' }]
         );
         return;
       }
@@ -112,11 +114,11 @@ export default function ContactsScreen() {
         setShowImportModal(true);
         setShowAddModal(false);
       } else {
-        Alert.alert('אין אנשי קשר', 'לא נמצאו אנשי קשר במכשיר שלך');
+        Alert.alert(t('contacts.noContactsInDevice'), t('contacts.noContactsInDevice'));
       }
     } catch (error) {
-      console.error('Failed to fetch contacts:', error);
-      Alert.alert('שגיאה', 'אירעה שגיאה בטעינת אנשי הקשר מהמכשיר');
+      console.error('[ContactsScreen] Failed to fetch device contacts:', error);
+      Alert.alert(t('common.error'), t('contacts.errorLoading'));
     }
   };
 
@@ -134,8 +136,8 @@ export default function ContactsScreen() {
       }));
 
       await addMultipleContacts(contactsToAdd);
-      
-      toast.success(`${selectedContacts.length} אנשי קשר יובאו בהצלחה`, {
+
+      toast.success(`${selectedContacts.length} ${t('contacts.importSuccess')}`, {
         duration: 3000,
       });
 
@@ -143,8 +145,8 @@ export default function ContactsScreen() {
       setSelectedContactIds(new Set());
       setDeviceContacts([]);
     } catch (error) {
-      console.error('Failed to import contacts:', error);
-      Alert.alert('שגיאה', 'אירעה שגיאה בייבוא אנשי הקשר');
+      console.error('[ContactsScreen] Failed to import contacts:', error);
+      Alert.alert(t('common.error'), t('contacts.errorImporting'));
     }
   };
 
@@ -154,7 +156,7 @@ export default function ContactsScreen() {
     }
 
     if (!newContact.name.trim() || !newContact.phone.trim()) {
-      Alert.alert('שגיאה', 'נא למלא לפחות שם וטלפון');
+      Alert.alert(t('common.error'), t('contacts.fillRequired'));
       return;
     }
 
@@ -167,16 +169,14 @@ export default function ContactsScreen() {
         notes: newContact.notes || undefined,
         groups: [],
       });
-      
-      toast.success('איש קשר נוסף בהצלחה', {
-        duration: 2000,
-      });
+
+      toast.success(t('contacts.contactAdded'), { duration: 2000 });
 
       setShowAddModal(false);
       setNewContact({ name: '', phone: '', email: '', tag: '', notes: '' });
     } catch (error) {
-      console.error('Failed to add contact:', error);
-      Alert.alert('שגיאה', 'אירעה שגיאה בשמירת איש הקשר');
+      console.error('[ContactsScreen] Failed to add contact:', error);
+      Alert.alert(t('common.error'), t('contacts.errorSaving'));
     }
   };
 
@@ -197,13 +197,13 @@ export default function ContactsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#EEF2FF', '#F8FAFC', '#FFFFFF']}
+        colors={[colors.gradientHireStart, colors.gradientHireMid, colors.background]}
         locations={[0, 0.3, 1]}
         style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <BlurView intensity={90} tint="light" style={styles.header}>
-          <Text style={styles.headerTitle}>אנשי קשר</Text>
+          <Text style={styles.headerTitle}>{t('contacts.title')}</Text>
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => {
@@ -225,13 +225,13 @@ export default function ContactsScreen() {
         <View style={styles.content}>
           <View style={styles.searchContainer}>
             <BlurView intensity={80} tint="light" style={styles.searchBlur}>
-              <Search size={20} color="#9CA3AF" />
+              <Search size={20} color={colors.muted} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="חיפוש..."
+                placeholder={t('contacts.searchPlaceholder')}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.muted}
               />
             </BlurView>
           </View>
@@ -258,7 +258,7 @@ export default function ContactsScreen() {
                 )}
                 <User
                   size={18}
-                  color={selectedView === 'contacts' ? '#FFFFFF' : colors.textMuted}
+                  color={selectedView === 'contacts' ? colors.background : colors.textMuted}
                   style={{ zIndex: 1 }}
                 />
                 <Text
@@ -267,7 +267,7 @@ export default function ContactsScreen() {
                     selectedView === 'contacts' && styles.viewButtonTextActive,
                   ]}
                 >
-                  אנשי קשר ({contacts.length})
+                  {t('contacts.contactsTab')} ({contacts.length})
                 </Text>
               </Pressable>
 
@@ -291,7 +291,7 @@ export default function ContactsScreen() {
                 )}
                 <Users
                   size={18}
-                  color={selectedView === 'groups' ? '#FFFFFF' : colors.textMuted}
+                  color={selectedView === 'groups' ? colors.background : colors.textMuted}
                   style={{ zIndex: 1 }}
                 />
                 <Text
@@ -300,7 +300,7 @@ export default function ContactsScreen() {
                     selectedView === 'groups' && styles.viewButtonTextActive,
                   ]}
                 >
-                  קבוצות ({groups.length})
+                  {t('contacts.groupsTab')} ({groups.length})
                 </Text>
               </Pressable>
             </BlurView>
@@ -315,8 +315,8 @@ export default function ContactsScreen() {
               filteredContacts.length === 0 ? (
                 <EmptyState
                   icon={User}
-                  title={searchQuery ? 'לא נמצאו אנשי קשר' : 'אין אנשי קשר'}
-                  subtitle={searchQuery ? 'נסה חיפוש אחר' : 'הוסף אנשי קשר כדי להתחיל'}
+                  title={searchQuery ? t('contacts.noContacts') : t('contacts.noContacts')}
+                  subtitle={searchQuery ? t('contacts.noContacts') : t('contacts.noContactsDesc')}
                 />
               ) : (
                 filteredContacts.map((contact, index) => (
@@ -351,18 +351,18 @@ export default function ContactsScreen() {
                         <Text style={styles.contactName}>{contact.name}</Text>
                         {contact.tag && (
                           <View style={styles.tagBadge}>
-                            <TagIcon size={12} color="#6366F1" />
+                            <TagIcon size={12} color={colors.primaryLight} />
                             <Text style={styles.tagText}>{contact.tag}</Text>
                           </View>
                         )}
                         <View style={styles.contactDetailsRow}>
                           <Text style={styles.contactDetail}>{contact.phone}</Text>
-                          <Phone size={14} color="#9CA3AF" />
+                          <Phone size={14} color=colors.muted />
                         </View>
                         {contact.email && (
                           <View style={styles.contactDetailsRow}>
                             <Text style={styles.contactDetail}>{contact.email}</Text>
-                            <Mail size={14} color="#9CA3AF" />
+                            <Mail size={14} color=colors.muted />
                           </View>
                         )}
                         {contact.notes && (
@@ -370,7 +370,7 @@ export default function ContactsScreen() {
                             <Text style={styles.contactNotes} numberOfLines={2}>
                               {contact.notes}
                             </Text>
-                            <FileText size={14} color="#9CA3AF" />
+                            <FileText size={14} color=colors.muted />
                           </View>
                         )}
                       </View>
@@ -382,8 +382,8 @@ export default function ContactsScreen() {
               filteredGroups.length === 0 ? (
                 <EmptyState
                   icon={Users}
-                  title={searchQuery ? 'לא נמצאו קבוצות' : 'אין קבוצות'}
-                  subtitle={searchQuery ? 'נסה חיפוש אחר' : 'צור קבוצה כדי להתחיל'}
+                  title={t('contacts.noGroups')}
+                  subtitle={t('contacts.noGroupsDesc')}
                 />
               ) : (
                 filteredGroups.map((group, index) => (
@@ -406,7 +406,7 @@ export default function ContactsScreen() {
                     >
                       <View style={styles.groupIcon}>
                         <LinearGradient
-                          colors={[colors.success, '#059669']}
+                          colors={[colors.success, colors.successDark]}
                           style={styles.groupIconGradient}
                         >
                           <Users size={24} color="#FFFFFF" />
@@ -415,7 +415,7 @@ export default function ContactsScreen() {
                       <View style={styles.groupInfo}>
                         <Text style={styles.groupName}>{group.name}</Text>
                         <Text style={styles.groupMembers}>
-                          {group.contactIds.length} אנשי קשר
+                          {group.contactIds.length} {t('contacts.members')}
                         </Text>
                       </View>
                     </Pressable>
@@ -434,7 +434,7 @@ export default function ContactsScreen() {
         >
           <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
             <LinearGradient
-              colors={['#EEF2FF', '#F8FAFC', '#FFFFFF']}
+              colors={[colors.gradientHireStart, colors.gradientHireMid, colors.background]}
               locations={[0, 0.3, 1]}
               style={StyleSheet.absoluteFill}
             />
@@ -448,9 +448,9 @@ export default function ContactsScreen() {
                   setNewContact({ name: '', phone: '', email: '', tag: '', notes: '' });
                 }}
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>הוסף איש קשר</Text>
+              <Text style={styles.modalTitle}>{t('contacts.addContact')}</Text>
             </BlurView>
 
             <KeyboardAvoidingView
@@ -468,60 +468,60 @@ export default function ContactsScreen() {
                   activeOpacity={0.7}
                 >
                   <LinearGradient
-                    colors={[colors.success, '#059669']}
+                    colors={[colors.success, colors.successDark]}
                     style={styles.importButtonGradient}
                   >
                     <Download size={20} color="#FFFFFF" />
-                    <Text style={styles.importButtonText}>ייבא מאנשי קשר</Text>
+                    <Text style={styles.importButtonText}>{t('contacts.importFromDevice')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
 
                 <View style={styles.divider}>
                   <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>או הוסף ידנית</Text>
+                  <Text style={styles.dividerText}>{t('contacts.orAddManually')}</Text>
                   <View style={styles.dividerLine} />
                 </View>
 
                 <View style={styles.contactForm}>
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>שם מלא *</Text>
+                    <Text style={styles.inputLabel}>{t('contacts.fullName')} {t('contacts.required')}</Text>
                     <View style={styles.inputContainer}>
-                      <User size={20} color="#9CA3AF" />
+                      <User size={20} color={colors.muted} />
                       <TextInput
                         style={styles.input}
-                        placeholder="הכנס שם מלא"
+                        placeholder={t('contacts.fullName')}
                         value={newContact.name}
                         onChangeText={(text) => setNewContact({ ...newContact, name: text })}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.muted}
                       />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>טלפון *</Text>
+                    <Text style={styles.inputLabel}>{t('contacts.phone')} {t('contacts.required')}</Text>
                     <View style={styles.inputContainer}>
-                      <Phone size={20} color="#9CA3AF" />
+                      <Phone size={20} color={colors.muted} />
                       <TextInput
                         style={styles.input}
                         placeholder="05X-XXX-XXXX"
                         value={newContact.phone}
                         onChangeText={(text) => setNewContact({ ...newContact, phone: text })}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.muted}
                         keyboardType="phone-pad"
                       />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>אימייל (אופציונלי)</Text>
+                    <Text style={styles.inputLabel}>{t('contacts.email')} {t('contacts.optional')}</Text>
                     <View style={styles.inputContainer}>
-                      <Mail size={20} color="#9CA3AF" />
+                      <Mail size={20} color={colors.muted} />
                       <TextInput
                         style={styles.input}
                         placeholder="example@email.com"
                         value={newContact.email}
                         onChangeText={(text) => setNewContact({ ...newContact, email: text })}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.muted}
                         keyboardType="email-address"
                         autoCapitalize="none"
                       />
@@ -529,29 +529,29 @@ export default function ContactsScreen() {
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>תגית (אופציונלי)</Text>
+                    <Text style={styles.inputLabel}>{t('contacts.tag')} {t('contacts.optional')}</Text>
                     <View style={styles.inputContainer}>
-                      <TagIcon size={20} color="#9CA3AF" />
+                      <TagIcon size={20} color={colors.muted} />
                       <TextInput
                         style={styles.input}
-                        placeholder='למשל: "מלצר", "מנהל"'
+                        placeholder={t('contacts.tagPlaceholder')}
                         value={newContact.tag}
                         onChangeText={(text) => setNewContact({ ...newContact, tag: text })}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.muted}
                       />
                     </View>
                   </View>
 
                   <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>הערות (אופציונלי)</Text>
+                    <Text style={styles.inputLabel}>{t('contacts.notes')} {t('contacts.optional')}</Text>
                     <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                      <FileText size={20} color="#9CA3AF" style={styles.textAreaIcon} />
+                      <FileText size={20} color={colors.muted} style={styles.textAreaIcon} />
                       <TextInput
                         style={[styles.input, styles.textArea]}
-                        placeholder="הכנס הערות..."
+                        placeholder={t('contacts.notesPlaceholder')}
                         value={newContact.notes}
                         onChangeText={(text) => setNewContact({ ...newContact, notes: text })}
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={colors.muted}
                         multiline
                         numberOfLines={4}
                         textAlignVertical="top"
@@ -571,8 +571,8 @@ export default function ContactsScreen() {
                     colors={[colors.primaryLight, colors.primary]}
                     style={styles.saveButtonGradient}
                   >
-                    <Check size={24} color="#FFFFFF" />
-                    <Text style={styles.saveButtonText}>שמור איש קשר</Text>
+                    <Check size={24} color={colors.background} />
+                    <Text style={styles.saveButtonText}>{t('contacts.saveContact')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </View>
@@ -588,7 +588,7 @@ export default function ContactsScreen() {
         >
           <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
             <LinearGradient
-              colors={['#EEF2FF', '#F8FAFC', '#FFFFFF']}
+              colors={[colors.gradientHireStart, colors.gradientHireMid, colors.background]}
               locations={[0, 0.3, 1]}
               style={StyleSheet.absoluteFill}
             />
@@ -602,10 +602,10 @@ export default function ContactsScreen() {
                   setSelectedContactIds(new Set());
                 }}
               >
-                <X size={24} color="#6B7280" />
+                <X size={24} color={colors.textMuted} />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>
-                בחר אנשי קשר ({selectedContactIds.size})
+                {t('contacts.selectContacts')} ({selectedContactIds.size})
               </Text>
             </BlurView>
 
@@ -639,7 +639,7 @@ export default function ContactsScreen() {
                     <View style={styles.importContactInfo}>
                       <Text style={styles.importContactName}>{contact.name}</Text>
                       <Text style={styles.importContactPhone}>
-                        {contact.phoneNumbers?.[0]?.number || 'ללא טלפון'}
+                        {contact.phoneNumbers?.[0]?.number || t('contacts.noPhone')}
                       </Text>
                     </View>
                   </Pressable>
@@ -655,12 +655,12 @@ export default function ContactsScreen() {
                 disabled={selectedContactIds.size === 0}
               >
                 <LinearGradient
-                  colors={selectedContactIds.size === 0 ? [colors.muted, colors.textMuted] : [colors.success, '#059669']}
+                  colors={selectedContactIds.size === 0 ? [colors.muted, colors.textMuted] : [colors.success, colors.successDark]}
                   style={styles.saveButtonGradient}
                 >
-                  <Download size={24} color="#FFFFFF" />
+                  <Download size={24} color={colors.background} />
                   <Text style={styles.saveButtonText}>
-                    ייבא {selectedContactIds.size} אנשי קשר
+                    {t('contacts.importSelected')} {selectedContactIds.size} {t('contacts.members')}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.gradientHireStart,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,

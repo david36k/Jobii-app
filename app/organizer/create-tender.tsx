@@ -8,12 +8,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   Platform,
   ActivityIndicator,
   Modal,
   Pressable,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, DollarSign, Users, Check, X, Search, ChevronDown, AlertCircle } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
@@ -40,7 +40,11 @@ export default function CreateTender() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Tender creation costs 2 credits — block if user cannot afford one
   const hasNoCredits = currentUser && currentUser.credits < 2;
+
+  // Recipients without a linked Jobii user are stored as guest invites; they can be notified (e.g. SMS)
+  // but cannot accept/reject inside the app until they register — see invites.updateStatus in supabase-queries.
 
   const handleCreate = () => {
     if (hasNoCredits) {

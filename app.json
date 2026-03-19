@@ -39,7 +39,13 @@
       ],
       "expo-font",
       "expo-web-browser",
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Jobii צריך גישה לאנשי הקשר שלך כדי לייבא אנשי קשר."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,4 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
+import { colors } from '@/constants/colors';
 import { router, Stack } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -84,14 +85,14 @@ export default function EditProfile() {
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
                 <Text style={styles.labelText}>שם מלא</Text>
-                <User size={18} color="#6B7280" />
+                <User size={18} color={colors.textMuted} />
               </View>
               <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
                 placeholder="הכנס שם מלא"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.muted}
                 textAlign="right"
               />
             </View>
@@ -99,14 +100,14 @@ export default function EditProfile() {
             <View style={styles.inputGroup}>
               <View style={styles.inputLabel}>
                 <Text style={styles.labelText}>טלפון</Text>
-                <Phone size={18} color="#6B7280" />
+                <Phone size={18} color={colors.textMuted} />
               </View>
               <TextInput
                 style={styles.input}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="הכנס מספר טלפון"
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.muted}
                 keyboardType="phone-pad"
                 textAlign="right"
               />
@@ -121,7 +122,7 @@ export default function EditProfile() {
             activeOpacity={0.8}
             disabled={isSaving}
           >
-            <Save size={24} color="#FFFFFF" />
+            <Save size={24} color={colors.background} />
             <Text style={styles.saveButtonText}>{isSaving ? 'שומר...' : 'שמור שינויים'}</Text>
           </TouchableOpacity>
         </View>
@@ -133,7 +134,7 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.backgroundAlt,
   },
   scrollView: {
     flex: 1,
@@ -150,11 +151,11 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#4F46E5',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#4F46E5',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -163,18 +164,18 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 48,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: colors.background,
   },
   changeAvatarButton: {
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 20,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.gradientLoginStart,
   },
   changeAvatarText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#4F46E5',
+    color: colors.primary,
   },
   form: {
     gap: 20,
@@ -190,17 +191,17 @@ const styles = StyleSheet.create({
   labelText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#374151',
+    color: colors.textSecondary,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -214,11 +215,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row-reverse',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4F46E5',
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 12,
-    shadowColor: '#4F46E5',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -227,6 +228,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: '#FFFFFF',
+    color: colors.background,
   },
 });

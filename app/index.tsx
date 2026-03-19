@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { colors } from '@/constants/colors';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { router } from 'expo-router';
 import { useEffect, useState, useRef } from 'react';
 import { supabaseQueries } from '@/utils/supabase-queries';
@@ -24,6 +25,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function Index() {
   const { currentUser, switchUser, isInitialized } = useApp();
+  const { t } = useLanguage();
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
@@ -85,7 +87,7 @@ export default function Index() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>טוען...</Text>
+          <Text style={styles.loadingText}>{t('login.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -107,7 +109,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#EEF2FF', '#FEFCE8', '#FFFFFF']}
+        colors={[colors.gradientLoginStart, colors.gradientLoginMid, colors.background]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -135,17 +137,17 @@ export default function Index() {
                 <View style={styles.logoCircle}>
                   <Phone size={48} color={colors.primary} strokeWidth={2} />
                 </View>
-                <Text style={styles.title}>Jobii</Text>
-                <Text style={styles.subtitle}>התחבר עם מספר הטלפון שלך</Text>
+                <Text style={styles.title}>{t('login.title')}</Text>
+                <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
               </View>
 
               <BlurView intensity={80} tint="light" style={styles.formCard}>
                 <View style={styles.formCardInner}>
-                  <Text style={styles.label}>מספר טלפון</Text>
+                  <Text style={styles.label}>{t('login.phoneLabel')}</Text>
                   <View style={styles.phoneInputContainer}>
                     <TextInput
                       style={styles.phoneInput}
-                      placeholder="050-123-4567"
+                      placeholder={t('login.phonePlaceholder')}
                       placeholderTextColor={colors.muted}
                       keyboardType="phone-pad"
                       value={phoneNumber}
@@ -173,7 +175,7 @@ export default function Index() {
                       style={styles.loginButtonGradient}
                     >
                       <Text style={styles.loginButtonText}>
-                        {isLoading ? 'מתחבר...' : 'התחבר'}
+                        {isLoading ? t('login.connecting') : t('login.connect')}
                       </Text>
                     </LinearGradient>
                   </TouchableOpacity>
@@ -188,7 +190,7 @@ export default function Index() {
                       setShowTermsModal(true);
                     }}
                   >
-                    <Text style={styles.footerLink}>תנאי שימוש</Text>
+                    <Text style={styles.footerLink}>{t('login.terms')}</Text>
                   </TouchableOpacity>
                   <Text style={styles.footerSeparator}>•</Text>
                   <TouchableOpacity
@@ -197,12 +199,10 @@ export default function Index() {
                       setShowPrivacyModal(true);
                     }}
                   >
-                    <Text style={styles.footerLink}>מדיניות פרטיות</Text>
+                    <Text style={styles.footerLink}>{t('login.privacy')}</Text>
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.footerText}>
-                  בהמשך השימוש באפליקציה, אתה מסכים לתנאים שלנו
-                </Text>
+                <Text style={styles.footerText}>{t('login.footerDisclaimer')}</Text>
               </View>
             </Animated.View>
           </SafeAreaView>
@@ -217,7 +217,7 @@ export default function Index() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <BlurView intensity={80} tint="light" style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>תנאי שימוש</Text>
+            <Text style={styles.modalTitle}>{t('login.termsModalTitle')}</Text>
             <TouchableOpacity
               onPress={() => setShowTermsModal(false)}
               style={styles.modalCloseButton}
@@ -247,7 +247,7 @@ export default function Index() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <BlurView intensity={80} tint="light" style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>מדיניות פרטיות</Text>
+            <Text style={styles.modalTitle}>{t('login.privacyModalTitle')}</Text>
             <TouchableOpacity
               onPress={() => setShowPrivacyModal(false)}
               style={styles.modalCloseButton}

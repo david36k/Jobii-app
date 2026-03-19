@@ -22,6 +22,7 @@ function RootLayoutNav() {
       <Stack.Screen name="organizer/tender-details" options={{ title: "פרטי מכרז" }} />
       <Stack.Screen name="participant/tender-details" options={{ title: "הצעת עבודה" }} />
       <Stack.Screen name="profile/edit" options={{ title: "ערוך פרופיל" }} />
+      <Stack.Screen name="tokens" options={{ title: "טוקנים", headerBackTitle: "חזרה" }} />
     </Stack>
   );
 }

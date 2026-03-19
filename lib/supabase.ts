@@ -25,4 +25,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-console.log('[Supabase] Client initialized');
+if (__DEV__) {
+  console.log('[Supabase] Client initialized');
+};

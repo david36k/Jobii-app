@@ -41,6 +41,26 @@ export const colors = {
   glassBorder: 'rgba(0, 0, 0, 0.05)',
   // Blue (e.g. status open)
   blue: '#3B82F6',
+  // Screen gradient stops (light mode)
+  gradientWorkStart: '#ECFDF5',
+  gradientWorkMid: '#F0FDF4',
+  gradientHireStart: '#EEF2FF',
+  gradientHireMid: '#F8FAFC',
+  gradientLoginStart: '#EEF2FF',
+  gradientLoginMid: '#FEFCE8',
+  // Overlays / tints
+  creditsButtonBg: 'rgba(251, 191, 36, 0.1)',
+  creditsButtonBorder: 'rgba(251, 191, 36, 0.3)',
+  statIconSecondaryBg: 'rgba(16, 185, 129, 0.15)',
+  whiteTint30: 'rgba(255, 255, 255, 0.3)',
+  whiteTint20: 'rgba(255, 255, 255, 0.2)',
+  whiteOnAccent: 'rgba(255, 255, 255, 0.9)',
+  shadow: '#000000',
+  // Status badge backgrounds (work invites)
+  statusPendingBg: 'rgba(251, 191, 36, 0.15)',
+  statusAcceptedBg: 'rgba(16, 185, 129, 0.15)',
+  statusRejectedBg: 'rgba(239, 68, 68, 0.15)',
+  statusMutedBg: 'rgba(156, 163, 175, 0.15)',
 } as const;
 
 // Legacy light theme (kept for existing imports)

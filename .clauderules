@@ -1,0 +1,272 @@
+# Jobii – Claude AI Development Rules
+# Single Source of Truth for all AI-assisted development sessions.
+# These rules are MANDATORY. Never deviate without explicit user instruction.
+
+---
+
+## 0. PRIME DIRECTIVE
+
+You are building Jobii — a two-sided Israeli gig-worker marketplace (React Native + Expo + Supabase).
+Every decision must serve three goals:
+1. **Speed to ship** (solo dev, lean and automated)
+2. **Strict modularity** (prevent spaghetti as the app scales)
+3. **Flawless RTL/Hebrew UX** (Israel is the primary market)
+
+When uncertain, choose the simpler, more explicit option over the clever one.
+
+---
+
+## 1. TYPESCRIPT STANDARDS
+
+### 1.1 Strictness
+- All files are `.tsx` (components) or `.ts` (logic/utilities). Never `.js` or `.jsx`.
+- `strict: true` is assumed. Never use implicit `any`. Always type function parameters and return values.
+- Prefer `type` over `interface` for object shapes (unless extension is needed).
+- Use `as const` for literal objects and arrays (e.g., design tokens, status enums).
+
+### 1.2 Naming Conventions
+| Thing | Convention | Example |
+|---|---|---|
+| Component | PascalCase | `TenderCard` |
+| Hook | camelCase, `use` prefix | `useTenderList` |
+| Utility function | camelCase | `formatCurrency` |
+| Type / interface | PascalCase | `TenderStatus` |
+| Constant | SCREAMING_SNAKE_CASE | `MAX_CREDITS_PER_PURCHASE` |
+| File (component) | PascalCase | `TenderCard.tsx` |
+| File (hook/util) | camelCase | `useTenderList.ts` |
+
+### 1.3 Error Handling
+- **Never swallow errors silently.** Every `catch` block must either:
+  a. Re-throw with context: `throw new Error(\`[useTenderList] Failed to fetch: \${err.message}\`)`
+  b. Show user-visible feedback via `sonner-native` toast.
+- Use `try/catch` only at the **boundary** (mutation `mutationFn`, API layer). Inner helpers should throw, not catch.
+- Supabase query functions must always destructure `{ data, error }` and throw `error` immediately if present.
+- Use structured error prefixes: `[FeatureName] Action: reason` for all `console.error` calls.
+
+### 1.4 Forbidden Patterns
+- ❌ `any` type without a `// TODO: type this` comment and linked issue
+- ❌ Inline `StyleSheet.create` with magic numbers — use design tokens from `constants/colors.ts`
+- ❌ Raw `console.log` in production paths — use conditional dev logging
+- ❌ Hardcoded Hebrew or English strings in JSX — use `t('key')` from `useLanguage()`
+- ❌ Direct `supabase.from()` calls inside components or hooks — go through `utils/supabase-queries.ts`
+
+---
+
+## 2. FOLDER STRUCTURE
+
+The canonical structure is:
+
+```
+jobii-app/
+├── app/                        # Expo Router screens ONLY — no business logic
+│   ├── _layout.tsx             # Root layout (providers, fonts, splash)
+│   ├── index.tsx               # Login screen
+│   ├── (tabs)/                 # Main tab navigator
+│   │   ├── _layout.tsx
+│   │   ├── dashboard.tsx       # Mode-aware dashboard (Work / Hire)
+│   │   ├── contacts.tsx
+│   │   ├── archive.tsx
+│   │   └── settings.tsx
+│   ├── organizer/              # Hire-mode screens
+│   │   ├── dashboard.tsx
+│   │   ├── create-tender.tsx
+│   │   └── tender/[id].tsx
+│   ├── profile/
+│   │   └── edit.tsx
+│   └── (modals)/               # Full-screen modals (use modal presentation)
+├── components/                 # Reusable UI components
+│   ├── ui/                     # Generic atoms (Button, Card, Badge, Input)
+│   └── [Feature]/              # Feature-specific components (TenderCard, CreditsBadge)
+├── hooks/                      # Custom React hooks (data fetching, business logic)
+│   ├── useTenders.ts
+│   ├── useCredits.ts
+│   └── useMode.ts              # Work vs Hire mode logic
+├── contexts/
+│   ├── AppContext.tsx           # Auth state, user, global mutations
+│   └── LanguageContext.tsx      # i18n and RTL direction
+├── utils/
+│   ├── supabase-queries.ts     # ALL Supabase interactions (the only DB layer)
+│   └── formatters.ts           # Pure functions: currency, date, phone
+├── constants/
+│   ├── colors.ts               # Design tokens — THE only color source
+│   ├── translations.ts         # All i18n strings (he + en)
+│   └── config.ts               # App-level constants (credits costs, limits)
+├── types/
+│   └── index.ts                # All shared TypeScript types
+├── lib/
+│   └── supabase.ts             # Supabase client singleton
+└── assets/
+    └── images/
+```
+
+### 2.1 Routing Rules (Expo Router)
+- Screen files in `app/` must be thin: import a screen component, render it, export default. No inline logic.
+- Use `(tabs)` group for the main nav. Use `(modals)` for full-screen overlays with `presentation: 'modal'`.
+- Dynamic routes use `[id]` syntax. Always validate the param at the top of the screen.
+- Organizer-only screens live under `app/organizer/`. Guard them with a role check at the top.
+
+### 2.2 Component Rules
+- Components in `components/ui/` are **mode-agnostic** (no awareness of Work/Hire).
+- Components in `components/[Feature]/` can be mode-aware but must not fetch data — receive props only.
+- Maximum component file length: **200 lines**. If longer, extract sub-components or move logic to a hook.
+- Styles live in a `StyleSheet.create({})` at the **bottom** of the same file. No separate style files.
+
+---
+
+## 3. STATE MANAGEMENT & DATA FETCHING
+
+### 3.1 The Two-Layer Rule
+| Layer | Responsibility | Lives In |
+|---|---|---|
+| **Server state** | All Supabase data | React Query (`useQuery`, `useMutation`) |
+| **Client state** | UI state, mode toggle, modals | `useState` / `AppContext` |
+
+Never put server data in `useState`. Never put UI state in React Query.
+
+### 3.2 React Query Conventions
+- Query keys must be **arrays** and follow this hierarchy:
+  - `['tenders']` — all tenders
+  - `['tenders', userId]` — user-scoped tenders
+  - `['tenders', tenderId]` — single tender
+  - `['user', userId]` — current user
+  - `['credits', userId]` — user credits (separate from user profile)
+- Always set `staleTime` explicitly. Default suggestion: `1000 * 60 * 2` (2 minutes).
+- Mutations must call `queryClient.invalidateQueries` in `onSuccess` with the **minimum** necessary keys.
+- Use `mutateAsync` only when the caller needs to `await` the result (e.g., navigation after create). Otherwise use `mutate`.
+
+### 3.3 Work / Hire State Separation
+- Work-mode data hooks (invites, upcoming shifts) must use query keys scoped to `['work', userId, ...]`.
+- Hire-mode data hooks (tenders I organized, credits) must use query keys scoped to `['hire', userId, ...]`.
+- **Never** mix Work and Hire query keys in the same `useQuery` call.
+- The mode toggle (`isHireMode: boolean`) lives in `AppContext` and is persisted to `AsyncStorage`.
+
+### 3.4 Supabase Realtime
+- Subscribe to realtime only at the **AppContext level** (not in individual screens).
+- All realtime handlers do exactly one thing: `queryClient.invalidateQueries({ queryKey: [...] })`.
+- Always unsubscribe in the `useEffect` cleanup (`supabase.removeChannel(channel)`).
+
+### 3.5 AppContext Scope
+`AppContext` is reserved for:
+- Auth state (`currentUserId`, `currentUser`, `logout`)
+- Global mutations that affect multiple screens (e.g., `createTender`, `updateInviteStatus`)
+- Realtime subscription management
+
+Feature-specific data fetching belongs in **dedicated hooks** in `hooks/`, not AppContext.
+
+---
+
+## 4. UI/UX & DESIGN SYSTEM
+
+### 4.1 Design Token Enforcement
+- **ALL colors come from `constants/colors.ts`**. Never write a hex value or `rgba()` literal in a component.
+- **ALL spacing uses a base-8 scale**: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64.
+- Border radius scale: 8 (small), 12 (default), 16 (card), 20 (modal), 28 (pill/large card).
+- Font weights: `'400'`, `'500'`, `'600'`, `'700'`, `'800'`. Never use numeric literals without `as const`.
+
+### 4.2 Glassmorphism (The Established UI Pattern)
+The app uses a glassmorphism aesthetic. Maintain it consistently:
+- Glass cards: `BlurView` (intensity 80, tint "light") + `backgroundColor: colors.glassBackgroundStrong`
+- Glass borders: `borderColor: colors.glassBorder`, `borderWidth: 1`
+- Shadows: use `colors.primary` or `colors.shadow` for `shadowColor`, keep `shadowOpacity` ≤ 0.15
+- Screen backgrounds: always `LinearGradient` using the mode-appropriate gradient tokens:
+  - Work mode: `[colors.gradientWorkStart, colors.gradientWorkMid, colors.background]`
+  - Hire mode: `[colors.gradientHireStart, colors.gradientHireMid, colors.background]`
+- When adding a new "card" component, use this as the reference pattern:
+  ```tsx
+  <BlurView intensity={80} tint="light" style={styles.card}>
+    <View style={styles.cardInner}>{/* content */}</View>
+  </BlurView>
+  // styles:
+  card: { borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: colors.glassBorder }
+  cardInner: { padding: 20, backgroundColor: colors.glassBackground }
+  ```
+
+### 4.3 Mode Color Coding
+- **Work mode** (Seeker): use `colors.success` / `colors.gradientWorkStart` family (emerald green)
+- **Hire mode** (Organizer): use `colors.primary` / `colors.gradientHireStart` family (indigo)
+- **Credits/tokens**: always amber (`colors.warning`, `colors.amber`, `colors.creditsButtonBg`)
+- Do NOT mix mode colors. A Work-mode component must never use `colors.primary` as its accent.
+
+### 4.4 RTL & Hebrew (MANDATORY)
+- Hebrew is the DEFAULT locale. The UI must look correct in RTL before it looks correct in LTR.
+- Every `Text` component that contains user-facing content must use `textAlign: 'right'` OR inherit from an RTL-aware parent.
+- All `flexDirection: 'row'` layouts must be tested in RTL — use `flexDirection: 'row-reverse'` or `I18nManager.isRTL` aware layouts when direction matters.
+- Never hardcode text direction — always derive from `useLanguage()` context.
+- Icon-left / icon-right patterns: use `I18nManager.isRTL` to mirror icon placement.
+- Input fields: `textAlign: 'right'` for Hebrew. Include both `he` and `en` keys in `translations.ts` for every new string.
+
+### 4.5 Animations & Feedback
+- Entrance animations: `Animated` API or `moti` for simple fade/slide. Keep duration ≤ 600ms.
+- Use `expo-haptics` for all primary actions (button press, confirm, error).
+- Toasts/notifications: use `sonner-native` exclusively. No `Alert.alert` for non-destructive messages.
+- Destructive confirmations (delete, logout): use `Alert.alert` with explicit Cancel/Confirm.
+
+### 4.6 Icons
+- Use `lucide-react-native` exclusively. No mixing with `@expo/vector-icons`.
+- Always pass explicit `size` and `color` props. Never rely on defaults.
+
+---
+
+## 5. SUPABASE & BACKEND RULES
+
+### 5.1 Database Access Layer
+- All database interactions go through `utils/supabase-queries.ts`. No exceptions.
+- Group queries by entity: `supabaseQueries.users`, `supabaseQueries.tenders`, etc.
+- Each function must be typed with explicit input params and return type — never return `any`.
+- DB column names are `snake_case`. App types are `camelCase`. Mapping happens in `mapXFromDB()` functions at the bottom of `supabase-queries.ts`.
+
+### 5.2 RPCs for Complex Operations
+- Any operation that touches multiple tables or requires atomicity MUST use a Supabase RPC (PostgreSQL function).
+- Examples: `create_tender_with_payment`, `add_credits_to_user`.
+- Never simulate transactions client-side with sequential `.insert()` / `.update()` calls.
+
+### 5.3 Row-Level Security (RLS)
+- Every table must have RLS enabled. Never trust client-side role checks alone for data access.
+- Hire/organizer-only operations (create tender, deduct credits) must be enforced by RLS policies, not just UI guards.
+- Regularly review RLS policies when adding new features — note any gaps in the feature spec.
+
+### 5.4 Credits System
+- Credits are Hire-mode only. Never display or reference credits in Work-mode UI.
+- Credit mutations must go through the `add_credits_to_user` RPC (atomic, server-enforced).
+- Deducting credits happens inside `create_tender_with_payment` RPC. Do not deduct client-side.
+- Always show a low-credits warning when `credits < 10` and a blocking state when `credits === 0`.
+
+---
+
+## 6. PERFORMANCE & LEAN ARCHITECTURE
+
+- **No premature abstraction.** Build the feature directly. Extract only when you see the same pattern 3+ times.
+- **No unused dependencies.** Before adding a package, verify it's not already covered by existing deps.
+- **Image optimization.** Use `expo-image` (not `Image` from React Native) for all remote images.
+- **List optimization.** Use `FlashList` (from `@shopify/flash-list`) for any list >20 items. Never use plain `ScrollView` for data lists.
+- **Avoid re-renders.** Pass stable references to query keys. Memoize derived data with `useMemo` when the computation is non-trivial.
+
+---
+
+## 7. CODE CONSISTENCY CHECKLIST
+
+Before completing any task, verify:
+- [ ] No hardcoded strings — all text uses `t('key')`
+- [ ] No hardcoded colors — all colors use `colors.X`
+- [ ] All new translation keys added to both `he` and `en` in `translations.ts`
+- [ ] RTL layout tested (flip `flexDirection`, check `textAlign`)
+- [ ] Error states handled (loading, empty, error for every data fetch)
+- [ ] New Supabase query added to `supabase-queries.ts`, not inline
+- [ ] React Query keys follow the hierarchy convention
+- [ ] No logic added directly to `app/` screen files — extracted to hooks or components
+- [ ] Design tokens used (colors, spacing, border radius follow the scale)
+- [ ] Glassmorphism pattern maintained for new card/modal components
+- [ ] Credits UI only visible in Hire mode
+
+---
+
+## 8. WHAT NOT TO DO
+
+- ❌ Do NOT refactor working code unless explicitly asked
+- ❌ Do NOT add features, options, or configurability beyond what was requested
+- ❌ Do NOT change design tokens or color values without explicit instruction
+- ❌ Do NOT add comments or docstrings to code you didn't touch
+- ❌ Do NOT rename existing variables, types, or functions unless asked
+- ❌ Do NOT add error boundaries, fallbacks, or validations for impossible states
+- ❌ Do NOT introduce new state management patterns (no Zustand, Redux, Jotai, etc.)
+- ❌ Do NOT use `StyleSheet.flatten` or spread styles — compose them as arrays: `[styles.base, styles.variant]`
