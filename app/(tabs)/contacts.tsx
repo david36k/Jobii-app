@@ -357,12 +357,12 @@ export default function ContactsScreen() {
                         )}
                         <View style={styles.contactDetailsRow}>
                           <Text style={styles.contactDetail}>{contact.phone}</Text>
-                          <Phone size={14} color=colors.muted />
+                          <Phone size={14} color={colors.muted} />
                         </View>
                         {contact.email && (
                           <View style={styles.contactDetailsRow}>
                             <Text style={styles.contactDetail}>{contact.email}</Text>
-                            <Mail size={14} color=colors.muted />
+                            <Mail size={14} color={colors.muted} />
                           </View>
                         )}
                         {contact.notes && (
@@ -370,7 +370,7 @@ export default function ContactsScreen() {
                             <Text style={styles.contactNotes} numberOfLines={2}>
                               {contact.notes}
                             </Text>
-                            <FileText size={14} color=colors.muted />
+                            <FileText size={14} color={colors.muted} />
                           </View>
                         )}
                       </View>
