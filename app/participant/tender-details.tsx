@@ -1,5 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { colors } from '@/constants/colors';
 import RequireAuthModal from '@/components/ui/RequireAuthModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
@@ -21,10 +22,10 @@ export default function ParticipantTenderDetails() {
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.errorContainer}>
-            <AlertCircle size={48} color="#DC2626" />
-            <Text style={styles.errorText}>Tender not found</Text>
+            <AlertCircle size={48} color={colors.error} />
+            <Text style={styles.errorText}>{t('tender.tenderNotFound')}</Text>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>Go Back</Text>
+              <Text style={styles.backButtonText}>{t('tender.goBack')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -39,10 +40,10 @@ export default function ParticipantTenderDetails() {
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.errorContainer}>
-            <AlertCircle size={48} color="#DC2626" />
-            <Text style={styles.errorText}>You are not invited to this tender</Text>
+            <AlertCircle size={48} color={colors.error} />
+            <Text style={styles.errorText}>{t('tender.notInvited')}</Text>
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>Go Back</Text>
+              <Text style={styles.backButtonText}>{t('tender.goBack')}</Text>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -59,25 +60,25 @@ export default function ParticipantTenderDetails() {
     ).length;
 
     if (invite.status !== 'accepted' && currentAcceptedCountExcludingMe >= tender.quota) {
-      Alert.alert('Quota Full', 'Sorry, this tender has reached its quota. Please try another one.');
+      Alert.alert(t('tender.quotaFull'), t('tender.quotaFullMsg'));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
 
-    Alert.alert('Accept Tender', 'Are you sure you want to accept this job offer?', [
+    Alert.alert(t('tender.confirmAccept'), t('tender.confirmAcceptMsg'), [
       {
-        text: 'Cancel',
+        text: t('common.cancel'),
         style: 'cancel',
       },
       {
-        text: 'Accept',
+        text: t('tender.accept'),
         style: 'default',
         onPress: () => {
           updateInviteStatus(tender.id, currentUser.id, 'accepted');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          Alert.alert('Success', 'You have accepted the job offer!', [
+          Alert.alert(t('common.success'), t('tender.acceptedMsg'), [
             {
-              text: 'OK',
+              text: t('common.confirm'),
               onPress: () => router.back(),
             },
           ]);
@@ -88,20 +89,20 @@ export default function ParticipantTenderDetails() {
 
   const handleReject = () => {
     if (!currentUser || !invite) return;
-    Alert.alert('Reject Tender', 'Are you sure you want to reject this job offer?', [
+    Alert.alert(t('tender.confirmReject'), t('tender.confirmRejectMsg'), [
       {
-        text: 'Cancel',
+        text: t('common.cancel'),
         style: 'cancel',
       },
       {
-        text: 'Reject',
+        text: t('tender.reject'),
         style: 'destructive',
         onPress: () => {
           updateInviteStatus(tender.id, currentUser.id, 'rejected');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          Alert.alert('Rejected', 'You have rejected the job offer.', [
+          Alert.alert(t('dashboard.statusRejected'), t('tender.rejectedMsg'), [
             {
-              text: 'OK',
+              text: t('common.confirm'),
               onPress: () => router.back(),
             },
           ]);
@@ -126,11 +127,11 @@ export default function ParticipantTenderDetails() {
 
     switch (invite.status) {
       case 'accepted':
-        return { text: 'Accepted', color: '#059669', bg: '#D1FAE5', icon: Check };
+        return { text: t('dashboard.statusAccepted'), color: colors.successDark, bg: colors.statusAcceptedBg, icon: Check };
       case 'rejected':
-        return { text: 'Rejected', color: '#DC2626', bg: '#FEE2E2', icon: X };
+        return { text: t('dashboard.statusRejected'), color: colors.error, bg: colors.statusRejectedBg, icon: X };
       default:
-        return { text: 'Pending', color: '#F59E0B', bg: '#FEF3C7', icon: Clock };
+        return { text: t('dashboard.statusPending'), color: colors.warning, bg: colors.statusPendingBg, icon: Clock };
     }
   };
 
@@ -152,27 +153,27 @@ export default function ParticipantTenderDetails() {
             <Text style={styles.title}>{tender.title}</Text>
 
             <View style={styles.organizerSection}>
-              <Text style={styles.organizerLabel}>Organized by</Text>
+              <Text style={styles.organizerLabel}>{t('tender.organizedBy')}</Text>
               <Text style={styles.organizerName}>{tender.organizerName}</Text>
             </View>
 
             <View style={styles.detailsGrid}>
               <View style={styles.detailItem}>
                 <View style={styles.detailIconContainer}>
-                  <Calendar size={24} color="#4F46E5" />
+                  <Calendar size={24} color={colors.primary} />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Date</Text>
+                  <Text style={styles.detailLabel}>{t('tender.date')}</Text>
                   <Text style={styles.detailValue}>{formatDateFull(tender.date)}</Text>
                 </View>
               </View>
 
               <View style={styles.detailItem}>
                 <View style={styles.detailIconContainer}>
-                  <Clock size={24} color="#4F46E5" />
+                  <Clock size={24} color={colors.primary} />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Time</Text>
+                  <Text style={styles.detailLabel}>{t('tender.time')}</Text>
                   <Text style={styles.detailValue}>
                     {tender.startTime} - {tender.endTime}
                   </Text>
@@ -181,20 +182,20 @@ export default function ParticipantTenderDetails() {
 
               <View style={styles.detailItem}>
                 <View style={styles.detailIconContainer}>
-                  <DollarSign size={24} color="#4F46E5" />
+                  <DollarSign size={24} color={colors.primary} />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Payment</Text>
+                  <Text style={styles.detailLabel}>{t('tender.pay')}</Text>
                   <Text style={styles.detailValue}>₪{tender.pay}</Text>
                 </View>
               </View>
 
               <View style={styles.detailItem}>
                 <View style={styles.detailIconContainer}>
-                  <Users size={24} color="#4F46E5" />
+                  <Users size={24} color={colors.primary} />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Workers Needed</Text>
+                  <Text style={styles.detailLabel}>{t('tender.workersNeeded')}</Text>
                   <Text style={styles.detailValue}>{tender.quota}</Text>
                 </View>
               </View>
@@ -202,10 +203,10 @@ export default function ParticipantTenderDetails() {
               {tender.location && (
                 <View style={styles.detailItem}>
                   <View style={styles.detailIconContainer}>
-                    <MapPin size={24} color="#4F46E5" />
+                    <MapPin size={24} color={colors.primary} />
                   </View>
                   <View style={styles.detailContent}>
-                    <Text style={styles.detailLabel}>מיקום</Text>
+                    <Text style={styles.detailLabel}>{t('tender.location')}</Text>
                     <Text style={styles.detailValue}>{tender.location}</Text>
                   </View>
                 </View>
@@ -214,7 +215,7 @@ export default function ParticipantTenderDetails() {
 
             {tender.description && (
               <View style={styles.descriptionSection}>
-                <Text style={styles.descriptionLabel}>Description</Text>
+                <Text style={styles.descriptionLabel}>{t('tender.description')}</Text>
                 <Text style={styles.descriptionText}>{tender.description}</Text>
               </View>
             )}
@@ -238,13 +239,13 @@ export default function ParticipantTenderDetails() {
           {currentUser && invite?.status === 'pending' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                <Check size={24} color="#FFFFFF" />
-                <Text style={styles.acceptButtonText}>Accept</Text>
+                <Check size={24} color={colors.background} />
+                <Text style={styles.acceptButtonText}>{t('tender.accept')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.rejectButton} onPress={handleReject}>
-                <X size={24} color="#DC2626" />
-                <Text style={styles.rejectButtonText}>Reject</Text>
+                <X size={24} color={colors.error} />
+                <Text style={styles.rejectButtonText}>{t('tender.reject')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -252,8 +253,8 @@ export default function ParticipantTenderDetails() {
           {currentUser && invite?.status === 'rejected' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-                <Check size={24} color="#FFFFFF" />
-                <Text style={styles.acceptButtonText}>Change to Accept</Text>
+                <Check size={24} color={colors.background} />
+                <Text style={styles.acceptButtonText}>{t('tender.changeToAccept')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -261,8 +262,8 @@ export default function ParticipantTenderDetails() {
           {currentUser && invite?.status === 'accepted' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.cancelButton} onPress={handleReject}>
-                <X size={24} color="#FFFFFF" />
-                <Text style={styles.cancelButtonText}>Cancel Attendance</Text>
+                <X size={24} color={colors.background} />
+                <Text style={styles.cancelButtonText}>{t('tender.cancelAttendance')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -276,7 +277,7 @@ export default function ParticipantTenderDetails() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.backgroundAlt,
   },
   safeArea: {
     flex: 1,
@@ -296,12 +297,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: '#DC2626',
+    color: colors.error,
     marginTop: 16,
     marginBottom: 24,
   },
   backButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#FFFFFF',
+    color: colors.background,
   },
   statusCard: {
     flexDirection: 'row',
@@ -325,11 +326,11 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -338,24 +339,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: '#111827',
+    color: colors.text,
     marginBottom: 16,
   },
   organizerSection: {
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.border,
   },
   organizerLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textMuted,
     marginBottom: 4,
   },
   organizerName: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: '#111827',
+    color: colors.text,
   },
   detailsGrid: {
     gap: 16,
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: colors.gradientHireStart,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -378,29 +379,29 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.textMuted,
     marginBottom: 2,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#111827',
+    color: colors.text,
   },
   descriptionSection: {
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: colors.border,
   },
   descriptionLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: '#6B7280',
+    color: colors.textMuted,
     marginBottom: 8,
   },
   descriptionText: {
     fontSize: 16,
-    color: '#374151',
+    color: colors.textSecondary,
     lineHeight: 24,
   },
   actions: {
@@ -411,11 +412,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#059669',
+    backgroundColor: colors.successDark,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: '#059669',
+    shadowColor: colors.successDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -424,33 +425,33 @@ const styles = StyleSheet.create({
   acceptButtonText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: colors.background,
   },
   rejectButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
     borderWidth: 2,
-    borderColor: '#DC2626',
+    borderColor: colors.error,
   },
   rejectButtonText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#DC2626',
+    color: colors.error,
   },
   cancelButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.error,
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
-    shadowColor: '#DC2626',
+    shadowColor: colors.error,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -459,6 +460,6 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: '#FFFFFF',
+    color: colors.background,
   },
 });

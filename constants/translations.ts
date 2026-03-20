@@ -165,6 +165,21 @@ type TranslationKeys = {
     selectCandidates: string;
     invited: string;
     available: string;
+    tenderNotFound: string;
+    notInvited: string;
+    goBack: string;
+    workersNeeded: string;
+    organizedBy: string;
+    quotaFull: string;
+    quotaFullMsg: string;
+    confirmAccept: string;
+    confirmAcceptMsg: string;
+    acceptedMsg: string;
+    confirmReject: string;
+    confirmRejectMsg: string;
+    rejectedMsg: string;
+    changeToAccept: string;
+    cancelAttendance: string;
   };
 };
 
@@ -334,6 +349,21 @@ export const translations: Record<Language, TranslationKeys> = {
       selectCandidates: 'בחר מועמדים',
       invited: 'הוזמנו',
       available: 'זמינים',
+      tenderNotFound: 'מכרז לא נמצא',
+      notInvited: 'לא הוזמנת למכרז זה',
+      goBack: 'חזור',
+      workersNeeded: 'עובדים דרושים',
+      organizedBy: 'מאת',
+      quotaFull: 'מכסה מלאה',
+      quotaFullMsg: 'מצטערים, המכרז הגיע למכסתו. אנא נסה מכרז אחר.',
+      confirmAccept: 'אשר השתתפות',
+      confirmAcceptMsg: 'האם אתה בטוח שברצונך לאשר הצעת עבודה זו?',
+      acceptedMsg: 'קיבלת את הצעת העבודה!',
+      confirmReject: 'דחיית השתתפות',
+      confirmRejectMsg: 'האם אתה בטוח שברצונך לדחות הצעת עבודה זו?',
+      rejectedMsg: 'דחית את הצעת העבודה.',
+      changeToAccept: 'שנה לאישור',
+      cancelAttendance: 'בטל השתתפות',
     },
   },
   en: {
@@ -501,6 +531,21 @@ export const translations: Record<Language, TranslationKeys> = {
       selectCandidates: 'Select Candidates',
       invited: 'Invited',
       available: 'Available',
+      tenderNotFound: 'Tender not found',
+      notInvited: 'You are not invited to this tender',
+      goBack: 'Go Back',
+      workersNeeded: 'Workers Needed',
+      organizedBy: 'Organized by',
+      quotaFull: 'Quota Full',
+      quotaFullMsg: 'Sorry, this tender has reached its quota. Please try another one.',
+      confirmAccept: 'Accept Tender',
+      confirmAcceptMsg: 'Are you sure you want to accept this job offer?',
+      acceptedMsg: 'You have accepted the job offer!',
+      confirmReject: 'Reject Tender',
+      confirmRejectMsg: 'Are you sure you want to reject this job offer?',
+      rejectedMsg: 'You have rejected the job offer.',
+      changeToAccept: 'Change to Accept',
+      cancelAttendance: 'Cancel Attendance',
     },
   },
 };

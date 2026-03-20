@@ -165,7 +165,13 @@ export const dashboardScreenStyles = StyleSheet.create({
     padding: 20,
   },
   statCardBlur: {
+    flex: 1,
     padding: 20,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    backgroundColor: colors.glassBackgroundStrong,
   },
   statIconContainer: {
     width: 48,

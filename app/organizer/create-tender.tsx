@@ -14,13 +14,14 @@ import {
   Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, DollarSign, Users, Check, X, Search, ChevronDown, AlertCircle } from 'lucide-react-native';
+import { Calendar, Clock, Users, Check, X, Search, ChevronDown, AlertCircle } from 'lucide-react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
 import { toast } from 'sonner-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
+import { colors } from '@/constants/colors';
 import RequireAuthModal from '@/components/ui/RequireAuthModal';
 
 export default function CreateTender() {
@@ -41,9 +42,12 @@ export default function CreateTender() {
   const [showRecipientSelector, setShowRecipientSelector] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [focusedField, setFocusedField] = useState<
+    'title' | 'date' | 'startTime' | 'endTime' | 'pay' | 'quota' | 'location' | null
+  >(null);
 
   useEffect(() => {
-    if (!currentUser) setShowRequireAuthModal(true);
+    setShowRequireAuthModal(!currentUser);
   }, [currentUser]);
 
   // Tender creation costs 2 credits — block if user cannot afford one
@@ -218,14 +222,22 @@ export default function CreateTender() {
           <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.field}>
             <Text style={styles.label}>כותרת *</Text>
-            <BlurView intensity={60} tint="light" style={styles.inputBlur}>
+            <BlurView
+              intensity={60}
+              tint="light"
+              style={[styles.inputBlur, focusedField === 'title' && styles.inputBlurFocused]}
+            >
               <TextInput
                 style={styles.input}
                 placeholder="לדוגמה: אירוע חתונה - מלצרים דרושים"
                 value={title}
                 onChangeText={setTitle}
-                placeholderTextColor="#9CA3AF"
-                onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                placeholderTextColor={colors.textMuted}
+                onFocus={() => {
+                  setFocusedField('title');
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                onBlur={() => setFocusedField(null)}
               />
             </BlurView>
           </View>
@@ -235,10 +247,12 @@ export default function CreateTender() {
             <Pressable
               style={({ pressed }) => [
                 styles.inputButton,
+                focusedField === 'date' && styles.inputButtonFocused,
                 pressed && styles.inputButtonPressed,
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setFocusedField('date');
                 setShowDatePicker(true);
               }}
             >
@@ -267,6 +281,7 @@ export default function CreateTender() {
                 if (selectedDate) {
                   setDate(selectedDate);
                 }
+                setFocusedField(null);
               }}
               minimumDate={new Date()}
             />
@@ -275,30 +290,52 @@ export default function CreateTender() {
           <View style={styles.row}>
             <View style={[styles.field, styles.flex1]}>
               <Text style={styles.label}>שעת התחלה *</Text>
-              <BlurView intensity={60} tint="light" style={styles.inputButton}>
+              <BlurView
+                intensity={60}
+                tint="light"
+                style={[
+                  styles.inputButton,
+                  focusedField === 'startTime' && styles.inputButtonFocused,
+                ]}
+              >
                 <Clock size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="09:00"
                   value={startTime}
                   onChangeText={setStartTime}
-                  placeholderTextColor="#9CA3AF"
-                  onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                  placeholderTextColor={colors.textMuted}
+                  onFocus={() => {
+                    setFocusedField('startTime');
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  onBlur={() => setFocusedField(null)}
                 />
               </BlurView>
             </View>
 
             <View style={[styles.field, styles.flex1]}>
               <Text style={styles.label}>שעת סיום *</Text>
-              <BlurView intensity={60} tint="light" style={styles.inputButton}>
+              <BlurView
+                intensity={60}
+                tint="light"
+                style={[
+                  styles.inputButton,
+                  focusedField === 'endTime' && styles.inputButtonFocused,
+                ]}
+              >
                 <Clock size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
                   placeholder="17:00"
                   value={endTime}
                   onChangeText={setEndTime}
-                  placeholderTextColor="#9CA3AF"
-                  onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                  placeholderTextColor={colors.textMuted}
+                  onFocus={() => {
+                    setFocusedField('endTime');
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  onBlur={() => setFocusedField(null)}
                 />
               </BlurView>
             </View>
@@ -307,23 +344,41 @@ export default function CreateTender() {
           <View style={styles.row}>
             <View style={[styles.field, styles.flex1]}>
               <Text style={styles.label}>תשלום (₪) *</Text>
-              <BlurView intensity={60} tint="light" style={styles.inputButton}>
-                <DollarSign size={20} color="#059669" />
+              <BlurView
+                intensity={60}
+                tint="light"
+                style={[
+                  styles.inputButton,
+                  focusedField === 'pay' && styles.inputButtonFocused,
+                ]}
+              >
+                <Text style={styles.currencySymbol}>₪</Text>
                 <TextInput
                   style={styles.timeInput}
                   placeholder="500"
                   value={pay}
                   onChangeText={setPay}
                   keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                  onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                  placeholderTextColor={colors.textMuted}
+                  onFocus={() => {
+                    setFocusedField('pay');
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  onBlur={() => setFocusedField(null)}
                 />
               </BlurView>
             </View>
 
             <View style={[styles.field, styles.flex1]}>
               <Text style={styles.label}>מכסה *</Text>
-              <BlurView intensity={60} tint="light" style={styles.inputButton}>
+              <BlurView
+                intensity={60}
+                tint="light"
+                style={[
+                  styles.inputButton,
+                  focusedField === 'quota' && styles.inputButtonFocused,
+                ]}
+              >
                 <Users size={20} color="#4F46E5" />
                 <TextInput
                   style={styles.timeInput}
@@ -331,8 +386,12 @@ export default function CreateTender() {
                   value={quota}
                   onChangeText={setQuota}
                   keyboardType="numeric"
-                  placeholderTextColor="#9CA3AF"
-                  onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                  placeholderTextColor={colors.textMuted}
+                  onFocus={() => {
+                    setFocusedField('quota');
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  onBlur={() => setFocusedField(null)}
                 />
               </BlurView>
             </View>
@@ -356,14 +415,25 @@ export default function CreateTender() {
 
           <View style={styles.field}>
             <Text style={styles.label}>מיקום (אופציונלי)</Text>
-            <BlurView intensity={60} tint="light" style={styles.inputBlur}>
+            <BlurView
+              intensity={60}
+              tint="light"
+              style={[
+                styles.inputBlur,
+                focusedField === 'location' && styles.inputBlurFocused,
+              ]}
+            >
               <TextInput
                 style={styles.input}
                 placeholder="למשל: אולם אירועים גני התערוכה, תל אביב"
                 value={location}
                 onChangeText={setLocation}
-                placeholderTextColor="#9CA3AF"
-                onFocus={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+                placeholderTextColor={colors.textMuted}
+                onFocus={() => {
+                  setFocusedField('location');
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+                onBlur={() => setFocusedField(null)}
               />
             </BlurView>
           </View>
@@ -632,19 +702,21 @@ const styles = StyleSheet.create({
   inputBlur: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#4F46E5',
+    shadowColor: colors.primaryLight,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.glassBackgroundStrong,
   },
   input: {
     padding: 16,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
     textAlign: 'right',
+    textAlignVertical: 'center',
   },
   textArea: {
     minHeight: 100,
@@ -655,20 +727,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#4F46E5',
+    shadowColor: colors.primaryLight,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderColor: colors.inputBorder,
+    backgroundColor: colors.glassBackgroundStrong,
+    paddingHorizontal: 16,
+    paddingVertical: 18,
+    minHeight: 64,
+    justifyContent: 'center',
   },
   inputButtonBlur: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'center',
     gap: 12,
     width: '100%',
+    flex: 1,
   },
   inputButtonPressed: {
     opacity: 0.9,
@@ -676,16 +754,17 @@ const styles = StyleSheet.create({
   },
   inputButtonText: {
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
     flex: 1,
     textAlign: 'right',
   },
   timeInput: {
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
     flex: 1,
     padding: 0,
     textAlign: 'right',
+    textAlignVertical: 'center',
   },
   row: {
     flexDirection: 'row-reverse',
@@ -714,6 +793,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     gap: 12,
+  },
+  inputBlurFocused: {
+    borderWidth: 2,
+    borderColor: colors.primaryLight,
+    shadowOpacity: 0.14,
+  },
+  inputButtonFocused: {
+    borderWidth: 2,
+    borderColor: colors.primaryLight,
+    shadowOpacity: 0.14,
+  },
+  currencySymbol: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.successDark,
+    width: 22,
+    textAlign: 'center',
   },
   recipientButtonText: {
     fontSize: 16,

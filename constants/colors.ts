@@ -39,6 +39,7 @@ export const colors = {
   glassBackground: 'rgba(255, 255, 255, 0.7)',
   glassBackgroundStrong: 'rgba(255, 255, 255, 0.85)',
   glassBorder: 'rgba(0, 0, 0, 0.05)',
+  inputBorder: 'rgba(255, 255, 255, 0.6)',
   // Overlays
   overlayScrim: 'rgba(0, 0, 0, 0.35)',
   // Blue (e.g. status open)

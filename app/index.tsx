@@ -53,7 +53,6 @@ export default function Index() {
     onSuccess: (user) => {
       switchUser(user.id);
       setIsLoading(false);
-      router.replace('/(tabs)/dashboard');
     },
     onError: (error) => {
       console.error('[Login] Failed:', error);

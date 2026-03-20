@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [guestMode, setGuestMode] = useState<boolean>(false);
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [hydrationComplete, setHydrationComplete] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     } catch (error) {
       console.error('[AppContext] Failed to load user:', error);
     } finally {
-      setIsInitialized(true);
+      setHydrationComplete(true);
     }
   };
 
@@ -43,6 +43,8 @@ export const [AppProvider, useApp] = createContextHook(() => {
     enabled: !!currentUserId,
     staleTime: 1000 * 60 * 5, // 5 minutes — user profile changes infrequently
   });
+
+  const isInitialized = hydrationComplete && (!currentUserId || !currentUserQuery.isLoading);
 
   const tendersQuery = useQuery({
     queryKey: ['tenders'],
