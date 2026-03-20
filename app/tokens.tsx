@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { ArrowRight, Coins, Sparkles, Play, Info } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '@/contexts/AppContext';
+import RequireAuthModal from '@/components/ui/RequireAuthModal';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 
@@ -57,6 +58,10 @@ export default function TokensScreen() {
   const { currentUser, addCredits } = useApp();
   const [watchedAdsToday, setWatchedAdsToday] = useState<number>(0);
   const maxAdsPerDay = 3;
+
+  if (!currentUser) {
+    return <RequireAuthModal visible={true} onClose={() => {}} />;
+  }
 
   const handlePurchase = (pkg: TokenPackage) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

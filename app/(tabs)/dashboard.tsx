@@ -8,7 +8,7 @@ import WorkView from '@/components/dashboard/WorkView';
 import HireView from '@/components/dashboard/HireView';
 import { dashboardScreenStyles as styles } from '@/components/dashboard/dashboardScreenStyles';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import * as Haptics from 'expo-haptics';
 import {
   View,
@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Briefcase, Users, Coins, Languages } from 'lucide-react-native';
+import RequireAuthModal from '@/components/ui/RequireAuthModal';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -37,6 +38,7 @@ export default function UnifiedDashboard() {
   const { myTenders, hasNoCredits, hasLowCredits } = useHireViewData(currentUser, tenders);
   const { language, switchLanguage, t } = useLanguage();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [showRequireAuthModal, setShowRequireAuthModal] = useState(false);
 
   const animateButton = () => {
     Animated.sequence([
@@ -115,6 +117,10 @@ export default function UnifiedDashboard() {
                     ]}
                     onPress={() => {
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      if (!currentUser) {
+                        setShowRequireAuthModal(true);
+                        return;
+                      }
                       router.push('/tokens');
                     }}
                   >
@@ -207,10 +213,18 @@ export default function UnifiedDashboard() {
               t={t}
             />
           ) : (
-            <HireView tenders={myTenders} hasNoCredits={hasNoCredits} hasLowCredits={hasLowCredits} t={t} />
+            <HireView
+              tenders={myTenders}
+              hasNoCredits={hasNoCredits}
+              hasLowCredits={hasLowCredits}
+              t={t}
+              isGuest={!currentUser}
+              onRequireAuth={() => setShowRequireAuthModal(true)}
+            />
           )}
         </ScrollView>
       </SafeAreaView>
+      <RequireAuthModal visible={showRequireAuthModal} onClose={() => setShowRequireAuthModal(false)} />
     </View>
   );
 }

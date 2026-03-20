@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.jobii.app"
+      "bundleIdentifier": "com.jobii.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSContactsUsageDescription": "Jobii צריך גישה לאנשי הקשר שלך כדי לייבא אנשי קשר."
+      }
     },
     "android": {
       "adaptiveIcon": {

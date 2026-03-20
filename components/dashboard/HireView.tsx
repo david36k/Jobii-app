@@ -16,9 +16,11 @@ type Props = {
   hasNoCredits: boolean;
   hasLowCredits: boolean;
   t: WorkViewTranslate;
+  isGuest: boolean;
+  onRequireAuth: () => void;
 };
 
-export default function HireView({ tenders, hasNoCredits, hasLowCredits, t }: Props) {
+export default function HireView({ tenders, hasNoCredits, hasLowCredits, t, isGuest, onRequireAuth }: Props) {
   const getAcceptedCount = (tender: Tender) =>
     tender.invites.filter((inv) => inv.status === 'accepted').length;
 
@@ -50,6 +52,11 @@ export default function HireView({ tenders, hasNoCredits, hasLowCredits, t }: Pr
         style={styles.createTenderCTA}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          if (isGuest) {
+            onRequireAuth();
+            return;
+          }
+
           router.push('/organizer/create-tender');
         }}
         activeOpacity={0.8}
@@ -72,7 +79,7 @@ export default function HireView({ tenders, hasNoCredits, hasLowCredits, t }: Pr
       </TouchableOpacity>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('dashboard.myTenders')}</Text>
+        <Text style={styles.sectionTitle}>{isGuest ? t('dashboard.publicTenders') : t('dashboard.myTenders')}</Text>
 
         {tenders.length === 0 ? (
           <EmptyState

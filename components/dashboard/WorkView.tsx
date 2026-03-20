@@ -1,6 +1,6 @@
 import { colors } from '@/constants/colors';
 import { dashboardScreenStyles as styles } from '@/components/dashboard/dashboardScreenStyles';
-import { formatDate } from '@/utils/formatting';
+import { formatDate, getStatusColor } from '@/utils/formatting';
 import EmptyState from '@/components/EmptyState';
 import { Tender, User } from '@/types';
 import { router } from 'expo-router';
@@ -29,10 +29,27 @@ type Props = {
 };
 
 export default function WorkView({ tenders, currentUser, monthlyEarnings, upcomingShifts, t }: Props) {
+  const isGuest = !currentUser;
+
   const getInviteForUser = (tender: Tender) =>
     tender.invites.find((inv) => inv.userId === currentUser?.id);
 
   const getStatusBadge = (tender: Tender) => {
+    if (isGuest) {
+      const statusColor = getStatusColor(tender.status);
+
+      switch (tender.status) {
+        case 'open':
+          return { text: t('dashboard.statusOpen'), color: statusColor, bg: `${statusColor}20` };
+        case 'full':
+          return { text: t('dashboard.statusFull'), color: statusColor, bg: `${statusColor}20` };
+        case 'closed':
+          return { text: t('dashboard.statusClosed'), color: statusColor, bg: `${statusColor}20` };
+        default:
+          return { text: tender.status, color: colors.textMuted, bg: colors.statusMutedBg };
+      }
+    }
+
     const invite = getInviteForUser(tender);
     if (!invite) return null;
 
@@ -82,21 +99,23 @@ export default function WorkView({ tenders, currentUser, monthlyEarnings, upcomi
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('dashboard.openInvitations')}</Text>
+        <Text style={styles.sectionTitle}>
+          {isGuest ? t('dashboard.publicShifts') : t('dashboard.openInvitations')}
+        </Text>
 
         {tenders.length === 0 ? (
           <EmptyState
             icon={Briefcase}
-            title={t('dashboard.noInvitations')}
-            subtitle={t('dashboard.noInvitationsDesc')}
+            title={isGuest ? t('dashboard.noPublicShifts') : t('dashboard.noInvitations')}
+            subtitle={isGuest ? t('dashboard.noPublicShiftsDesc') : t('dashboard.noInvitationsDesc')}
             iconColor={colors.borderLight}
           />
         ) : (
           tenders.map((tender, index) => {
             const status = getStatusBadge(tender);
-            const invite = getInviteForUser(tender);
+            const invite = isGuest ? undefined : getInviteForUser(tender);
 
-            if (!status || !invite) return null;
+            if (!status || (!isGuest && !invite)) return null;
 
             return (
               <MotiView
@@ -142,7 +161,7 @@ export default function WorkView({ tenders, currentUser, monthlyEarnings, upcomi
                     </View>
                   </View>
 
-                  {invite.status === 'pending' && (
+                  {!isGuest && invite?.status === 'pending' && (
                     <View style={styles.pendingIndicator}>
                       <Text style={styles.pendingText}>{t('dashboard.clickToRespond')}</Text>
                     </View>

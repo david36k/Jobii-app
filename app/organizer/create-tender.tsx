@@ -1,6 +1,6 @@
 import { useApp } from '@/contexts/AppContext';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,9 +21,11 @@ import { toast } from 'sonner-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { MotiView } from 'moti';
+import RequireAuthModal from '@/components/ui/RequireAuthModal';
 
 export default function CreateTender() {
   const { currentUser, createTender, contacts, groups } = useApp();
+  const [showRequireAuthModal, setShowRequireAuthModal] = useState<boolean>(false);
 
   const [title, setTitle] = useState<string>('');
   const [date, setDate] = useState<Date>(new Date());
@@ -40,6 +42,10 @@ export default function CreateTender() {
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  useEffect(() => {
+    if (!currentUser) setShowRequireAuthModal(true);
+  }, [currentUser]);
+
   // Tender creation costs 2 credits — block if user cannot afford one
   const hasNoCredits = currentUser && currentUser.credits < 2;
 
@@ -47,6 +53,11 @@ export default function CreateTender() {
   // but cannot accept/reject inside the app until they register — see invites.updateStatus in supabase-queries.
 
   const handleCreate = () => {
+    if (!currentUser) {
+      setShowRequireAuthModal(true);
+      return;
+    }
+
     if (hasNoCredits) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       toast.error('אין מספיק קרדיטים');
@@ -115,8 +126,8 @@ export default function CreateTender() {
     setTimeout(async () => {
       try {
         await createTender({
-          organizerId: currentUser!.id,
-          organizerName: currentUser!.name,
+          organizerId: currentUser.id,
+          organizerName: currentUser.name,
           title: title.trim(),
           date,
           startTime,
@@ -383,11 +394,11 @@ export default function CreateTender() {
           <Pressable 
             style={({ pressed }) => [
               styles.createButton,
-              (isCreating || hasNoCredits) && styles.createButtonDisabled,
+              (!currentUser || isCreating || hasNoCredits) && styles.createButtonDisabled,
               pressed && !isCreating && !hasNoCredits && styles.createButtonPressed,
             ]}
             onPress={handleCreate}
-            disabled={isCreating || hasNoCredits}
+            disabled={!currentUser || isCreating || hasNoCredits}
           >
             <LinearGradient
               colors={hasNoCredits ? ['#9CA3AF', '#6B7280'] : ['#6366F1', '#4F46E5']}
@@ -407,6 +418,7 @@ export default function CreateTender() {
           </ScrollView>
         </SafeAreaView>
       </View>
+      <RequireAuthModal visible={showRequireAuthModal} onClose={() => setShowRequireAuthModal(false)} />
 
       <Modal
         visible={showRecipientSelector}

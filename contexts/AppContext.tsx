@@ -8,21 +8,32 @@ import { supabase } from '@/lib/supabase';
 
 export const [AppProvider, useApp] = createContextHook(() => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [guestMode, setGuestMode] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    loadCurrentUserId();
+    hydrateAuthState();
   }, []);
 
-  const loadCurrentUserId = async () => {
+  const hydrateAuthState = async () => {
     try {
       const storedUserId = await AsyncStorage.getItem('currentUserId');
       if (storedUserId) {
         console.log('[AppContext] Found stored user:', storedUserId);
         setCurrentUserId(storedUserId);
+        setGuestMode(false);
+      }
+
+      const storedGuestMode = await AsyncStorage.getItem('guestMode');
+      if (!storedUserId && storedGuestMode === 'true') {
+        setGuestMode(true);
+        setCurrentUserId(null);
       }
     } catch (error) {
       console.error('[AppContext] Failed to load user:', error);
+    } finally {
+      setIsInitialized(true);
     }
   };
 
@@ -141,10 +152,12 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const switchUserMutation = useMutation({
     mutationFn: async (userId: string) => {
       await AsyncStorage.setItem('currentUserId', userId);
+      await AsyncStorage.removeItem('guestMode');
       return userId;
     },
     onSuccess: (userId) => {
       setCurrentUserId(userId);
+      setGuestMode(false);
       queryClient.invalidateQueries({ queryKey: ['user', userId] });
       queryClient.invalidateQueries({ queryKey: ['contacts', userId] });
       queryClient.invalidateQueries({ queryKey: ['groups', userId] });
@@ -300,15 +313,39 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('currentUserId');
+      await AsyncStorage.removeItem('guestMode');
       setCurrentUserId(null);
+      setGuestMode(false);
       queryClient.clear();
     } catch (error) {
       console.error('[AppContext] Logout failed:', error);
     }
   };
 
+  const enterGuestMode = async () => {
+    try {
+      await AsyncStorage.removeItem('currentUserId');
+      await AsyncStorage.setItem('guestMode', 'true');
+      setCurrentUserId(null);
+      setGuestMode(true);
+      queryClient.clear();
+    } catch (error) {
+      console.error('[AppContext] Enter guest mode failed:', error);
+    }
+  };
+
+  const exitGuestMode = async () => {
+    try {
+      await AsyncStorage.removeItem('guestMode');
+      setGuestMode(false);
+    } catch (error) {
+      console.error('[AppContext] Exit guest mode failed:', error);
+    }
+  };
+
   return {
     currentUser: currentUserQuery.data || null,
+    guestMode,
     switchUser,
     tenders: tendersQuery.data || [],
     contacts: contactsQuery.data || [],
@@ -317,7 +354,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     updateInviteStatus,
     getTenderById,
     mockUsers: [],
-    isInitialized: !currentUserQuery.isLoading,
+    isInitialized,
     addCredits,
     addContact,
     addMultipleContacts,
@@ -326,6 +363,8 @@ export const [AppProvider, useApp] = createContextHook(() => {
     deleteAccount,
     logout,
     updateProfile,
+    enterGuestMode,
+    exitGuestMode,
   };
 });
 

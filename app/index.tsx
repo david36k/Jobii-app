@@ -24,7 +24,7 @@ import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 
 export default function Index() {
-  const { currentUser, switchUser, isInitialized } = useApp();
+  const { currentUser, switchUser, isInitialized, guestMode, enterGuestMode } = useApp();
   const { t } = useLanguage();
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -63,10 +63,17 @@ export default function Index() {
 
   useEffect(() => {
     console.log('[Index] isInitialized:', isInitialized, 'currentUser:', currentUser?.id);
-    if (isInitialized && currentUser) {
+    if (!isInitialized) return;
+
+    if (currentUser) {
+      router.replace('/(tabs)/dashboard');
+      return;
+    }
+
+    if (guestMode) {
       router.replace('/(tabs)/dashboard');
     }
-  }, [currentUser, isInitialized]);
+  }, [currentUser, isInitialized, guestMode]);
 
   useEffect(() => {
     Animated.parallel([
@@ -83,7 +90,7 @@ export default function Index() {
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  if (!isInitialized || currentUser) {
+  if (!isInitialized || currentUser || guestMode) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
@@ -104,6 +111,18 @@ export default function Index() {
 
     const formattedPhone = cleanPhone.startsWith('0') ? `+972${cleanPhone.substring(1)}` : `+${cleanPhone}`;
     loginMutation.mutate(formattedPhone);
+  };
+
+  const handleContinueAsGuest = async () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setIsLoading(true);
+      await enterGuestMode();
+      router.replace('/(tabs)/dashboard');
+    } catch (error) {
+      console.error('[Guest Login Error]', error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -158,6 +177,22 @@ export default function Index() {
                       autoFocus={false}
                     />
                   </View>
+
+                  <TouchableOpacity
+                    style={[styles.guestButton, isLoading && styles.loginButtonDisabled]}
+                    onPress={handleContinueAsGuest}
+                    disabled={isLoading}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient
+                      colors={[colors.glassBackgroundStrong, colors.glassBackground]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.guestButtonGradient}
+                    >
+                      <Text style={styles.guestButtonText}>{t('login.continueAsGuest')}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     style={[
@@ -376,6 +411,26 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     opacity: 0.7,
+  },
+  guestButton: {
+    marginTop: 14,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  guestButtonGradient: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestButtonText: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: colors.text,
   },
   loginButtonGradient: {
     paddingVertical: 18,

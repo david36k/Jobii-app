@@ -1,17 +1,22 @@
 import { useApp } from '@/contexts/AppContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import RequireAuthModal from '@/components/ui/RequireAuthModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Calendar, Clock, DollarSign, Users, Check, X, AlertCircle, MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { formatDateFull } from '@/utils/formatting';
+import { formatDateFull, getStatusColor } from '@/utils/formatting';
+import { useState } from 'react';
 
 export default function ParticipantTenderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getTenderById, updateInviteStatus, currentUser } = useApp();
+  const { t } = useLanguage();
+  const [showRequireAuthModal, setShowRequireAuthModal] = useState<boolean>(false);
 
   const tender = getTenderById(id);
 
-  if (!tender || !currentUser) {
+  if (!tender) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -27,9 +32,9 @@ export default function ParticipantTenderDetails() {
     );
   }
 
-  const invite = tender.invites.find((inv) => inv.userId === currentUser.id);
+  const invite = currentUser ? tender.invites.find((inv) => inv.userId === currentUser.id) : undefined;
 
-  if (!invite) {
+  if (currentUser && !invite) {
     return (
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
@@ -48,6 +53,7 @@ export default function ParticipantTenderDetails() {
 
 
   const handleAccept = () => {
+    if (!currentUser || !invite) return;
     const currentAcceptedCountExcludingMe = tender.invites.filter(
       (inv) => inv.status === 'accepted' && inv.userId !== currentUser.id
     ).length;
@@ -81,6 +87,7 @@ export default function ParticipantTenderDetails() {
   };
 
   const handleReject = () => {
+    if (!currentUser || !invite) return;
     Alert.alert('Reject Tender', 'Are you sure you want to reject this job offer?', [
       {
         text: 'Cancel',
@@ -104,6 +111,19 @@ export default function ParticipantTenderDetails() {
   };
 
   const getStatusInfo = () => {
+    if (!currentUser || !invite) {
+      const statusColor = getStatusColor(tender.status);
+
+      switch (tender.status) {
+        case 'full':
+          return { text: t('dashboard.statusFull'), color: statusColor, bg: `${statusColor}20`, icon: Check };
+        case 'closed':
+          return { text: t('dashboard.statusClosed'), color: statusColor, bg: `${statusColor}20`, icon: AlertCircle };
+        default:
+          return { text: t('dashboard.statusOpen'), color: statusColor, bg: `${statusColor}20`, icon: Clock };
+      }
+    }
+
     switch (invite.status) {
       case 'accepted':
         return { text: 'Accepted', color: '#059669', bg: '#D1FAE5', icon: Check };
@@ -200,7 +220,22 @@ export default function ParticipantTenderDetails() {
             )}
           </View>
 
-          {invite.status === 'pending' && (
+          {!currentUser && tender.status !== 'closed' && (
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.acceptButton}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setShowRequireAuthModal(true);
+                }}
+              >
+                <Check size={24} color="#FFFFFF" />
+                <Text style={styles.acceptButtonText}>{t('tender.apply')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {currentUser && invite?.status === 'pending' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
                 <Check size={24} color="#FFFFFF" />
@@ -214,7 +249,7 @@ export default function ParticipantTenderDetails() {
             </View>
           )}
 
-          {invite.status === 'rejected' && (
+          {currentUser && invite?.status === 'rejected' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
                 <Check size={24} color="#FFFFFF" />
@@ -223,7 +258,7 @@ export default function ParticipantTenderDetails() {
             </View>
           )}
 
-          {invite.status === 'accepted' && (
+          {currentUser && invite?.status === 'accepted' && (
             <View style={styles.actions}>
               <TouchableOpacity style={styles.cancelButton} onPress={handleReject}>
                 <X size={24} color="#FFFFFF" />
@@ -233,6 +268,7 @@ export default function ParticipantTenderDetails() {
           )}
         </ScrollView>
       </SafeAreaView>
+      <RequireAuthModal visible={showRequireAuthModal} onClose={() => setShowRequireAuthModal(false)} />
     </View>
   );
 }

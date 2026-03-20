@@ -2,6 +2,8 @@ import { useApp } from '@/contexts/AppContext';
 import { colors } from '@/constants/colors';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { router } from 'expo-router';
+import RequireAuthModal from '@/components/ui/RequireAuthModal';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus, AlertTriangle, Languages } from 'lucide-react-native';
@@ -11,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function Settings() {
   const { currentUser, logout, deleteAccount } = useApp();
   const { language, switchLanguage, t, isRTL } = useLanguage();
+  const [showRequireAuthModal, setShowRequireAuthModal] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(t('settings.logoutConfirm'), t('settings.logoutMessage'), [
@@ -62,6 +65,10 @@ export default function Settings() {
           style={styles.creditsCard}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            if (!currentUser) {
+              setShowRequireAuthModal(true);
+              return;
+            }
             router.push('/tokens');
           }}
           activeOpacity={0.8}
@@ -221,6 +228,10 @@ export default function Settings() {
           </View>
         </View>
       </ScrollView>
+      <RequireAuthModal
+        visible={showRequireAuthModal}
+        onClose={() => setShowRequireAuthModal(false)}
+      />
     </SafeAreaView>
   );
 }

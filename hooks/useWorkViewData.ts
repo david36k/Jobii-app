@@ -4,13 +4,14 @@ import type { Tender } from '@/types';
 
 export function useWorkViewData(currentUser: User | null, tenders: Tender[]) {
   const myWork = useMemo(() => {
-    if (!currentUser) return [];
-    return tenders.filter((t) =>
-      t.invites.some((invite) => invite.userId === currentUser.id)
-    );
+    if (!currentUser) return tenders.filter((t) => t.status !== 'closed');
+
+    return tenders.filter((t) => t.invites.some((invite) => invite.userId === currentUser.id));
   }, [currentUser, tenders]);
 
   const monthlyEarnings = useMemo(() => {
+    if (!currentUser) return 0;
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -31,6 +32,11 @@ export function useWorkViewData(currentUser: User | null, tenders: Tender[]) {
   }, [myWork, currentUser]);
 
   const upcomingShifts = useMemo(() => {
+    if (!currentUser) {
+      const now = new Date();
+      return myWork.filter((t) => t.date >= now).length;
+    }
+
     const now = new Date();
     return myWork.filter((t) => {
       const invite = t.invites.find((inv) => inv.userId === currentUser?.id);

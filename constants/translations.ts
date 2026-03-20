@@ -28,6 +28,10 @@ type TranslationKeys = {
     footerDisclaimer: string;
     termsModalTitle: string;
     privacyModalTitle: string;
+    continueAsGuest: string;
+    requireAuthTitle: string;
+    requireAuthDesc: string;
+    requireAuthButton: string;
   };
   dashboard: {
     greeting: string;
@@ -46,12 +50,19 @@ type TranslationKeys = {
     createTenderCTA: string;
     createTenderDesc: string;
     clickToRespond: string;
+    publicShifts: string;
+    noPublicShifts: string;
+    noPublicShiftsDesc: string;
+    publicTenders: string;
     workers: string;
     creditsLow: string;
     creditsOut: string;
     creditsLowDesc: string;
     creditsOutDesc: string;
     by: string;
+    statusOpen: string;
+    statusFull: string;
+    statusClosed: string;
     statusPending: string;
     statusAccepted: string;
     statusRejected: string;
@@ -146,6 +157,7 @@ type TranslationKeys = {
     candidates: string;
     accept: string;
     reject: string;
+    apply: string;
     statusOpen: string;
     statusClosed: string;
     statusActive: string;
@@ -185,6 +197,10 @@ export const translations: Record<Language, TranslationKeys> = {
       footerDisclaimer: 'בהמשך השימוש באפליקציה, אתה מסכים לתנאים שלנו',
       termsModalTitle: 'תנאי שימוש',
       privacyModalTitle: 'מדיניות פרטיות',
+      continueAsGuest: 'המשך כאורח',
+      requireAuthTitle: 'נדרשת התחברות',
+      requireAuthDesc: 'התחבר או הירשם כדי להמשיך',
+      requireAuthButton: 'להתחברות',
     },
     dashboard: {
       greeting: 'שלום',
@@ -195,14 +211,21 @@ export const translations: Record<Language, TranslationKeys> = {
       monthlyEarnings: 'רווח החודש',
       upcomingShifts: 'משמרות קרובות',
       openInvitations: 'הזמנות פתוחות',
+      publicShifts: 'משמרות ציבוריות',
+      publicTenders: 'מכרזים ציבוריים',
       myTenders: 'המכרזים שלי',
       noInvitations: 'אין הזמנות פעילות',
       noInvitationsDesc: 'הזמנות לעבודה יופיעו כאן',
+      noPublicShifts: 'אין משמרות ציבוריות',
+      noPublicShiftsDesc: 'כרגע אין משמרות ציבוריות להצגה',
       noTenders: 'אין מכרזים פעילים',
       noTendersDesc: 'צור מכרז ראשון כדי להתחיל',
       createTenderCTA: 'צור מכרז חדש',
       createTenderDesc: 'גייס עובדים במהירות ובקלות',
       clickToRespond: 'לחץ לתגובה',
+      statusOpen: 'פתוח',
+      statusFull: 'מלא',
+      statusClosed: 'סגור',
       workers: 'עובדים',
       creditsLow: 'קרדיטים נמוכים',
       creditsOut: 'אזלו הקרדיטים',
@@ -303,6 +326,7 @@ export const translations: Record<Language, TranslationKeys> = {
       candidates: 'מועמדים',
       accept: 'אשר',
       reject: 'דחה',
+      apply: 'הגש מועמדות',
       statusOpen: 'פתוח',
       statusClosed: 'סגור',
       statusActive: 'פעיל',
@@ -340,6 +364,10 @@ export const translations: Record<Language, TranslationKeys> = {
       footerDisclaimer: 'By continuing, you agree to our terms',
       termsModalTitle: 'Terms of use',
       privacyModalTitle: 'Privacy policy',
+      continueAsGuest: 'Continue as guest',
+      requireAuthTitle: 'Login required',
+      requireAuthDesc: 'Log in or register to continue',
+      requireAuthButton: 'Log in',
     },
     dashboard: {
       greeting: 'Hello',
@@ -350,20 +378,27 @@ export const translations: Record<Language, TranslationKeys> = {
       monthlyEarnings: 'Monthly Earnings',
       upcomingShifts: 'Upcoming Shifts',
       openInvitations: 'Open Invitations',
+      publicShifts: 'Public shifts',
       myTenders: 'My Tenders',
       noInvitations: 'No Active Invitations',
       noInvitationsDesc: 'Work invitations will appear here',
+      noPublicShifts: 'No public shifts',
+      noPublicShiftsDesc: 'No public shifts available right now',
       noTenders: 'No Active Tenders',
       noTendersDesc: 'Create your first tender to get started',
       createTenderCTA: 'Create New Tender',
       createTenderDesc: 'Recruit employees quickly and easily',
       clickToRespond: 'Click to Respond',
+      publicTenders: 'Public tenders',
       workers: 'Workers',
       creditsLow: 'Low Credits',
       creditsOut: 'Out of Credits',
       creditsLowDesc: 'Recommended to add credits',
       creditsOutDesc: 'Tap credits above to add',
       by: 'By',
+      statusOpen: 'Open',
+      statusFull: 'Full',
+      statusClosed: 'Closed',
       statusPending: 'Pending',
       statusAccepted: 'Accepted',
       statusRejected: 'Rejected',
@@ -458,6 +493,7 @@ export const translations: Record<Language, TranslationKeys> = {
       candidates: 'Candidates',
       accept: 'Accept',
       reject: 'Reject',
+      apply: 'Apply',
       statusOpen: 'Open',
       statusClosed: 'Closed',
       statusActive: 'Active',

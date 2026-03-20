@@ -4,7 +4,7 @@ import type { Tender } from '@/types';
 
 export function useHireViewData(currentUser: User | null, tenders: Tender[]) {
   const myTenders = useMemo(() => {
-    if (!currentUser) return [];
+    if (!currentUser) return tenders.filter((t) => t.status !== 'closed');
     return tenders.filter((t) => t.organizerId === currentUser.id);
   }, [currentUser, tenders]);
 

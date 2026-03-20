@@ -39,6 +39,8 @@ export const colors = {
   glassBackground: 'rgba(255, 255, 255, 0.7)',
   glassBackgroundStrong: 'rgba(255, 255, 255, 0.85)',
   glassBorder: 'rgba(0, 0, 0, 0.05)',
+  // Overlays
+  overlayScrim: 'rgba(0, 0, 0, 0.35)',
   // Blue (e.g. status open)
   blue: '#3B82F6',
   // Screen gradient stops (light mode)
