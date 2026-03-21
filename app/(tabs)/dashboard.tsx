@@ -24,7 +24,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Briefcase, Users, Coins, Languages } from 'lucide-react-native';
+import { Briefcase, Users, Coins } from 'lucide-react-native';
 import RequireAuthModal from '@/components/ui/RequireAuthModal';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -36,7 +36,7 @@ export default function UnifiedDashboard() {
   const { mode, handleModeChange } = useDashboardMode();
   const { myWork, monthlyEarnings, upcomingShifts } = useWorkViewData(currentUser, tenders);
   const { myTenders, hasNoCredits, hasLowCredits } = useHireViewData(currentUser, tenders);
-  const { language, switchLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [showRequireAuthModal, setShowRequireAuthModal] = useState(false);
 
@@ -68,20 +68,6 @@ export default function UnifiedDashboard() {
       />
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <BlurView intensity={90} tint="light" style={styles.header}>
-          <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.languageButton}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                switchLanguage(language === 'he' ? 'en' : 'he');
-              }}
-            >
-              <Languages size={20} color={mode === 'work' ? colors.success : colors.primary} />
-              <Text style={[styles.languageText, { color: mode === 'work' ? colors.successDark : colors.primary }]}>
-                {language === 'he' ? 'EN' : 'HE'}
-              </Text>
-            </TouchableOpacity>
-          </View>
           <View style={styles.headerContent}>
             <TouchableOpacity
               style={[
@@ -89,7 +75,7 @@ export default function UnifiedDashboard() {
                 { shadowColor: mode === 'work' ? colors.success : colors.primary },
               ]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/(tabs)/settings');
               }}
               activeOpacity={0.8}
@@ -116,7 +102,7 @@ export default function UnifiedDashboard() {
                       },
                     ]}
                     onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       if (!currentUser) {
                         setShowRequireAuthModal(true);
                         return;

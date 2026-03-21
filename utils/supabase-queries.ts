@@ -68,12 +68,13 @@ export const supabaseQueries = {
       return data || 0;
     },
 
-    update: async (userId: string, updates: { name?: string; phone?: string }) => {
+    update: async (userId: string, updates: { name?: string; phone?: string; aboutMe?: string }) => {
       const { data, error } = await supabase
         .from('users')
         .update({
           ...(updates.name !== undefined && { name: updates.name }),
           ...(updates.phone !== undefined && { phone: updates.phone }),
+          ...(updates.aboutMe !== undefined && { about_me: updates.aboutMe }),
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -344,6 +345,7 @@ function mapUserFromDB(data: any): User {
     role: data.role,
     createdAt: new Date(data.created_at),
     credits: data.credits,
+    aboutMe: data.about_me ?? '',
   };
 }
 

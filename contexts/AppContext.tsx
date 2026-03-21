@@ -1,5 +1,5 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Tender, Contact, InviteStatus } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,11 +12,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
   const [hydrationComplete, setHydrationComplete] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    hydrateAuthState();
-  }, []);
-
-  const hydrateAuthState = async () => {
+  const hydrateAuthState = useCallback(async () => {
     try {
       const storedUserId = await AsyncStorage.getItem('currentUserId');
       if (storedUserId) {
@@ -35,7 +31,11 @@ export const [AppProvider, useApp] = createContextHook(() => {
     } finally {
       setHydrationComplete(true);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void hydrateAuthState();
+  }, [hydrateAuthState]);
 
   const currentUserQuery = useQuery({
     queryKey: ['user', currentUserId],
@@ -85,7 +85,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
           },
           (payload) => {
             console.log('[Realtime] Tenders change detected:', payload.eventType);
-            queryClient.invalidateQueries({ queryKey: ['tenders'] });
+            void queryClient.invalidateQueries({ queryKey: ['tenders'] });
           }
         )
         .subscribe((status) => {
@@ -105,7 +105,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
           },
           (payload) => {
             console.log('[Realtime] Invites change detected:', payload.eventType);
-            queryClient.invalidateQueries({ queryKey: ['tenders'] });
+            void queryClient.invalidateQueries({ queryKey: ['tenders'] });
           }
         )
         .subscribe((status) => {
@@ -126,7 +126,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
           (payload) => {
             console.log('[Realtime] Contacts change detected:', payload.eventType);
             if (currentUserId) {
-              queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+              void queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
             }
           }
         )
@@ -142,9 +142,9 @@ export const [AppProvider, useApp] = createContextHook(() => {
     return () => {
       console.log('[AppContext] Cleaning up Realtime subscriptions...');
       try {
-        if (tendersChannel) supabase.removeChannel(tendersChannel);
-        if (invitesChannel) supabase.removeChannel(invitesChannel);
-        if (contactsChannel) supabase.removeChannel(contactsChannel);
+        if (tendersChannel) void supabase.removeChannel(tendersChannel);
+        if (invitesChannel) void supabase.removeChannel(invitesChannel);
+        if (contactsChannel) void supabase.removeChannel(contactsChannel);
       } catch (error) {
         console.error('[Realtime] Cleanup error:', error);
       }
@@ -160,9 +160,9 @@ export const [AppProvider, useApp] = createContextHook(() => {
     onSuccess: (userId) => {
       setCurrentUserId(userId);
       setGuestMode(false);
-      queryClient.invalidateQueries({ queryKey: ['user', userId] });
-      queryClient.invalidateQueries({ queryKey: ['contacts', userId] });
-      queryClient.invalidateQueries({ queryKey: ['groups', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['groups', userId] });
     },
   });
 
@@ -171,15 +171,15 @@ export const [AppProvider, useApp] = createContextHook(() => {
       return supabaseQueries.users.addCredits(userId, amount);
     },
     onSuccess: (_, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['user', userId] });
     },
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: ({ userId, updates }: { userId: string; updates: { name?: string; phone?: string } }) =>
+    mutationFn: ({ userId, updates }: { userId: string; updates: { name?: string; phone?: string; aboutMe?: string } }) =>
       supabaseQueries.users.update(userId, updates),
     onSuccess: (_, { userId }) => {
-      queryClient.invalidateQueries({ queryKey: ['user', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['user', userId] });
     },
   });
 
@@ -205,7 +205,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenders'] });
+      void queryClient.invalidateQueries({ queryKey: ['tenders'] });
     },
   });
 
@@ -213,7 +213,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
     mutationFn: ({ tenderId, userId, status }: { tenderId: string; userId: string; status: InviteStatus }) =>
       supabaseQueries.invites.updateStatus(tenderId, userId, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenders'] });
+      void queryClient.invalidateQueries({ queryKey: ['tenders'] });
     },
   });
 
@@ -223,7 +223,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       return supabaseQueries.contacts.create(currentUserId, contact);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
     },
   });
 
@@ -233,7 +233,7 @@ export const [AppProvider, useApp] = createContextHook(() => {
       return supabaseQueries.contacts.createMultiple(currentUserId, contacts);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
     },
   });
 
@@ -241,14 +241,14 @@ export const [AppProvider, useApp] = createContextHook(() => {
     mutationFn: ({ contactId, updates }: { contactId: string; updates: Partial<Contact> }) =>
       supabaseQueries.contacts.update(contactId, updates),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
     },
   });
 
   const deleteContactMutation = useMutation({
     mutationFn: (contactId: string) => supabaseQueries.contacts.delete(contactId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
+      void queryClient.invalidateQueries({ queryKey: ['contacts', currentUserId] });
     },
   });
 
@@ -263,56 +263,56 @@ export const [AppProvider, useApp] = createContextHook(() => {
     },
   });
 
-  const switchUser = (userId: string) => {
+  const switchUser = useCallback((userId: string) => {
     switchUserMutation.mutate(userId);
-  };
+  }, [switchUserMutation]);
 
-  const addCredits = (userId: string, amount: number) => {
+  const addCredits = useCallback((userId: string, amount: number) => {
     addCreditsMutation.mutate({ userId, amount });
-  };
+  }, [addCreditsMutation]);
 
-  const updateProfile = async (userId: string, updates: { name?: string; phone?: string }) => {
+  const updateProfile = useCallback(async (userId: string, updates: { name?: string; phone?: string; aboutMe?: string }) => {
     return updateProfileMutation.mutateAsync({ userId, updates });
-  };
+  }, [updateProfileMutation]);
 
-  const createTender = async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
+  const createTender = useCallback(async (tender: Omit<Tender, 'id' | 'createdAt' | 'status'>) => {
     if (!tender.location) {
       throw new Error('Location is required');
     }
     return createTenderMutation.mutateAsync(tender);
-  };
+  }, [createTenderMutation]);
 
-  const updateInviteStatus = (tenderId: string, userId: string, status: InviteStatus) => {
+  const updateInviteStatus = useCallback((tenderId: string, userId: string, status: InviteStatus) => {
     updateInviteStatusMutation.mutate({ tenderId, userId, status });
-  };
+  }, [updateInviteStatusMutation]);
 
-  const getTenderById = (tenderId: string) => {
+  const getTenderById = useCallback((tenderId: string) => {
     return tendersQuery.data?.find((t) => t.id === tenderId);
-  };
+  }, [tendersQuery.data]);
 
-  const addContact = async (contact: Omit<Contact, 'id'>) => {
+  const addContact = useCallback(async (contact: Omit<Contact, 'id'>) => {
     const result = await addContactMutation.mutateAsync(contact);
     return result;
-  };
+  }, [addContactMutation]);
 
-  const addMultipleContacts = async (contacts: { name: string; phone: string; tag?: string }[]) => {
+  const addMultipleContacts = useCallback(async (contacts: { name: string; phone: string; tag?: string }[]) => {
     const result = await addMultipleContactsMutation.mutateAsync(contacts);
     return result;
-  };
+  }, [addMultipleContactsMutation]);
 
-  const deleteContact = (contactId: string) => {
+  const deleteContact = useCallback((contactId: string) => {
     deleteContactMutation.mutate(contactId);
-  };
+  }, [deleteContactMutation]);
 
-  const updateContact = (contactId: string, updates: Partial<Contact>) => {
+  const updateContact = useCallback((contactId: string, updates: Partial<Contact>) => {
     updateContactMutation.mutate({ contactId, updates });
-  };
+  }, [updateContactMutation]);
 
-  const deleteAccount = (userId: string) => {
+  const deleteAccount = useCallback((userId: string) => {
     deleteAccountMutation.mutate(userId);
-  };
+  }, [deleteAccountMutation]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await AsyncStorage.removeItem('currentUserId');
       await AsyncStorage.removeItem('guestMode');
@@ -322,9 +322,9 @@ export const [AppProvider, useApp] = createContextHook(() => {
     } catch (error) {
       console.error('[AppContext] Logout failed:', error);
     }
-  };
+  }, [queryClient]);
 
-  const enterGuestMode = async () => {
+  const enterGuestMode = useCallback(async () => {
     try {
       await AsyncStorage.removeItem('currentUserId');
       await AsyncStorage.setItem('guestMode', 'true');
@@ -334,18 +334,18 @@ export const [AppProvider, useApp] = createContextHook(() => {
     } catch (error) {
       console.error('[AppContext] Enter guest mode failed:', error);
     }
-  };
+  }, [queryClient]);
 
-  const exitGuestMode = async () => {
+  const exitGuestMode = useCallback(async () => {
     try {
       await AsyncStorage.removeItem('guestMode');
       setGuestMode(false);
     } catch (error) {
       console.error('[AppContext] Exit guest mode failed:', error);
     }
-  };
+  }, []);
 
-  return {
+  return useMemo(() => ({
     currentUser: currentUserQuery.data || null,
     guestMode,
     switchUser,
@@ -367,7 +367,28 @@ export const [AppProvider, useApp] = createContextHook(() => {
     updateProfile,
     enterGuestMode,
     exitGuestMode,
-  };
+  }), [
+    currentUserQuery.data,
+    guestMode,
+    switchUser,
+    tendersQuery.data,
+    contactsQuery.data,
+    groupsQuery.data,
+    createTender,
+    updateInviteStatus,
+    getTenderById,
+    isInitialized,
+    addCredits,
+    addContact,
+    addMultipleContacts,
+    deleteContact,
+    updateContact,
+    deleteAccount,
+    logout,
+    updateProfile,
+    enterGuestMode,
+    exitGuestMode,
+  ]);
 });
 
 export const useParticipantTenders = () => {

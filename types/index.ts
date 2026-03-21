@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   credits: number;
+  aboutMe?: string;
 }
 
 export interface Contact {

@@ -3,17 +3,23 @@ import { colors } from '@/constants/colors';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { router } from 'expo-router';
 import RequireAuthModal from '@/components/ui/RequireAuthModal';
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus, AlertTriangle, Languages } from 'lucide-react-native';
+import { Phone, LogOut, MessageCircle, Bell, ChevronLeft, Edit, Coins, Plus, AlertTriangle, Languages, Globe, Save } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Settings() {
-  const { currentUser, logout, deleteAccount } = useApp();
+  const { currentUser, logout, deleteAccount, updateProfile } = useApp();
   const { language, switchLanguage, t, isRTL } = useLanguage();
   const [showRequireAuthModal, setShowRequireAuthModal] = useState(false);
+  const [aboutMe, setAboutMe] = useState<string>('');
+  const [isSavingAboutMe, setIsSavingAboutMe] = useState(false);
+
+  useEffect(() => {
+    setAboutMe(currentUser?.aboutMe ?? '');
+  }, [currentUser?.aboutMe]);
 
   const handleLogout = () => {
     Alert.alert(t('settings.logoutConfirm'), t('settings.logoutMessage'), [
@@ -27,15 +33,34 @@ export default function Settings() {
         onPress: async () => {
           await logout();
           router.replace('/');
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         },
       },
     ]);
   };
 
   const handleEditProfile = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/profile/edit');
+  };
+
+  const handleSaveAboutMe = async () => {
+    if (!currentUser) {
+      setShowRequireAuthModal(true);
+      return;
+    }
+
+    try {
+      setIsSavingAboutMe(true);
+      await updateProfile(currentUser.id, { aboutMe: aboutMe.trim() });
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('נשמר', 'הטקסט נשמר ויופיע בפרופיל שלך.');
+    } catch (error) {
+      console.error('[Settings] Failed to save about me:', error);
+      Alert.alert('שגיאה', 'לא הצלחנו לשמור את הטקסט. נסה שוב.');
+    } finally {
+      setIsSavingAboutMe(false);
+    }
   };
 
   return (
@@ -64,7 +89,7 @@ export default function Settings() {
         <TouchableOpacity
           style={styles.creditsCard}
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             if (!currentUser) {
               setShowRequireAuthModal(true);
               return;
@@ -95,13 +120,48 @@ export default function Settings() {
         </TouchableOpacity>
 
         <View style={styles.section}>
+          <Text style={[styles.sectionTitle, !isRTL && styles.textLeft]}>כמה מילים עליי</Text>
+          <View style={styles.aboutMeCard}>
+            <View style={[styles.aboutMeHeader, !isRTL && styles.aboutMeHeaderLTR]}>
+              <Globe size={18} color={colors.primary} />
+              <Text style={[styles.aboutMeTitle, !isRTL && styles.textLeft]}>הטקסט הזה גלוי לכולם</Text>
+            </View>
+            <TextInput
+              testID="about-me-input"
+              style={[styles.aboutMeInput, !isRTL && styles.textLeft]}
+              value={aboutMe}
+              onChangeText={setAboutMe}
+              placeholder="ספר/י בקצרה עליך, ניסיון, זמינות או תחומים שאת/ה מחפש/ת"
+              placeholderTextColor={colors.muted}
+              multiline
+              numberOfLines={4}
+              maxLength={220}
+              textAlignVertical="top"
+            />
+            <View style={[styles.aboutMeFooter, !isRTL && styles.aboutMeFooterLTR]}>
+              <Text style={styles.aboutMeCount}>{aboutMe.trim().length}/220</Text>
+              <TouchableOpacity
+                testID="save-about-me-button"
+                style={[styles.saveAboutMeButton, isSavingAboutMe && styles.saveAboutMeButtonDisabled]}
+                onPress={handleSaveAboutMe}
+                disabled={isSavingAboutMe}
+                activeOpacity={0.85}
+              >
+                <Save size={16} color={colors.background} />
+                <Text style={styles.saveAboutMeText}>{isSavingAboutMe ? 'שומר...' : 'שמור'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, !isRTL && styles.textLeft]}>{t('settings.general')}</Text>
           <View style={styles.menuCard}>
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                switchLanguage(language === 'he' ? 'en' : 'he');
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                void switchLanguage(language === 'he' ? 'en' : 'he');
               }}
             >
               <View style={[styles.menuItemRight, !isRTL && styles.menuItemLeft]}>
@@ -125,7 +185,7 @@ export default function Settings() {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/tokens');
               }}
             >
@@ -139,7 +199,7 @@ export default function Settings() {
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 Alert.alert(t('settings.notifications'), t('settings.notificationsComingSoon'));
               }}
             >
@@ -153,7 +213,7 @@ export default function Settings() {
             <TouchableOpacity
               style={[styles.menuItem, styles.menuItemLast]}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 Alert.alert(t('settings.contact'), t('settings.contactEmail'));
               }}
             >
@@ -196,7 +256,7 @@ export default function Settings() {
               style={styles.deleteButton}
               onPress={() => {
                 if (Platform.OS !== 'web') {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                 }
                 Alert.alert(
                   t('settings.deleteAccountConfirm'),
@@ -211,7 +271,7 @@ export default function Settings() {
                       style: 'destructive',
                       onPress: async () => {
                         if (currentUser) {
-                          await deleteAccount(currentUser.id);
+                          deleteAccount(currentUser.id);
                           setTimeout(() => {
                             router.replace('/');
                           }, 100);
@@ -327,6 +387,75 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
+  },
+  aboutMeCard: {
+    backgroundColor: colors.background,
+    borderRadius: 18,
+    padding: 18,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+    gap: 14,
+    marginBottom: 4,
+  },
+  aboutMeHeader: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 10,
+  },
+  aboutMeHeaderLTR: {
+    flexDirection: 'row',
+  },
+  aboutMeTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: colors.text,
+    textAlign: 'right',
+  },
+  aboutMeInput: {
+    minHeight: 112,
+    borderRadius: 16,
+    backgroundColor: colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+    textAlign: 'right',
+  },
+  aboutMeFooter: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  aboutMeFooterLTR: {
+    flexDirection: 'row',
+  },
+  aboutMeCount: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  saveAboutMeButton: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  saveAboutMeButtonDisabled: {
+    opacity: 0.6,
+    backgroundColor: colors.muted,
+  },
+  saveAboutMeText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.background,
   },
   creditsGradient: {
     flexDirection: 'row-reverse',
